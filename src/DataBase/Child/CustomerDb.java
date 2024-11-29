@@ -14,9 +14,9 @@ public class CustomerDb extends AbstractDataBase
     {
         String sql = "CREATE TABLE IF NOT EXISTS Customers"
                 + "("
-                + "Id TEXT PRIMARY KEY UNIQUE NOT NULL, "
+                + "Id TEXT PRIMARY KEY, "
                 + "Name TEXT NOT NULL, "
-                + "UserName TEXT NOT NULL, "
+                + "UserName TEXT UNIQUE NOT NULL, "
                 + "Password TEXT NOT NULL, "
                 + "IsLogin INTEGER NOT NULL, "
                 + "Balance FLOAT NOT NULL, "
@@ -27,7 +27,7 @@ public class CustomerDb extends AbstractDataBase
     }
 
     //===========================================Insert===========================================
-    public boolean insertCustomerData(Customer customer)
+    public String insertCustomerData(Customer customer)
     {
         String sql = "INSERT INTO Customers "
                 + "(Id, Name, UserName, Password, IsLogin, Balance, ShopId) "
@@ -71,7 +71,7 @@ public class CustomerDb extends AbstractDataBase
     }
 
     //===========================================Update===========================================
-    public boolean updateCustomerData(Customer customer)
+    public String updateCustomerData(Customer customer)
     {
         String sql = "UPDATE Customers SET * WHERE Id = ?";
 

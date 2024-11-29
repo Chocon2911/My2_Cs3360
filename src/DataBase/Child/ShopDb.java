@@ -12,9 +12,9 @@ public class ShopDb extends AbstractDataBase
     {
         String sql = "CREATE TABLE IF NOT EXISTS Shops"
                 + "("
-                + "Id TEXT PRIMARY KEY UNIQUE NOT NULL, "
+                + "Id TEXT PRIMARY, "
                 + "Name TEXT NOT NULL, "
-                + "UserName TEXT NOT NULL, "
+                + "UserName TEXT UNIQUE NOT NULL, "
                 + "Password TEXT NOT NULL, "
                 + "IsLogin INTEGER NOT NULL, "
                 + "SystemCode TEXT NOT NULL, "
@@ -25,7 +25,7 @@ public class ShopDb extends AbstractDataBase
     }
 
     //===========================================Insert===========================================
-    public boolean insertShopData(Shop shop)
+    public String insertShopData(Shop shop)
     {
         String sql = "INSERT INTO Shops" 
                 + "(Id, Name, UserName, Password, IsLogin, SystemCode, CheckInCode) "
@@ -49,7 +49,7 @@ public class ShopDb extends AbstractDataBase
     }
 
     //===========================================Update===========================================
-    public boolean updateShopData(Shop shop)
+    public String updateShopData(Shop shop)
     {
         String sql = "UPDATE Shops SET * WHERE Id = ?";
 

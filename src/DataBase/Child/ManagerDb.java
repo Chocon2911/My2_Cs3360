@@ -15,9 +15,9 @@ public class ManagerDb extends AbstractDataBase
     {
         String sql = "CREAT TABLE IF NOT EXISTS Managers"
                 + "("
-                + "Id TEXT PRIMARY KEY UNIQUE NOT NULL, "
+                + "Id TEXT PRIMARY KEY, "
                 + "Name TEXT NOT NULL, "
-                + "UserName TEXT NOT NULL, "
+                + "UserName TEXT UNIQUE NOT NULL, "
                 + "Password TEXT NOT NULL, "
                 + "IsLogin INTEGER NOT NULL, "
                 + "ShopId TEXT"
@@ -27,7 +27,7 @@ public class ManagerDb extends AbstractDataBase
     }
 
     //===========================================Insert===========================================
-    public boolean insertManagerData(Manager manager)
+    public String insertManagerData(Manager manager)
     {
         String sql = "INSERT INTO Managers "
                 + "(Id, Name, UserName, Password, IsLogin, ShopId) "
@@ -72,7 +72,7 @@ public class ManagerDb extends AbstractDataBase
     }
 
     //===========================================Update===========================================
-    public boolean updateManagerData(Manager manager)
+    public String updateManagerData(Manager manager)
     {
         String sql = "UPDATE Managers SET * WHERE Id = ?";
 

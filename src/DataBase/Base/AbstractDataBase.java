@@ -119,24 +119,28 @@ public abstract class AbstractDataBase extends ObjUtil
     }
 
     //===========================================Insert===========================================
-    protected boolean insertData(String url, String executeLine, List<DataBaseData> data)
+    protected String insertData(String url, String executeLine, List<DataBaseData> data)
     {
         Connection conn = getConnection(url);
-        if (conn == null) return false;
+        if (conn == null) throw new RuntimeException("Connection is null");
         
         try (PreparedStatement preStatement = conn.prepareStatement(executeLine))
         {
             for (int i = 0; i < data.size(); i++)
             {
-                if (!this.setPreParedStatement(preStatement, data.get(i), i + 1)) return false;
+                if (!this.setPreParedStatement(preStatement, data.get(i), i + 1))
+                {
+                    throw new RuntimeException("setPreParedStatement error");
+                }
             }
 
-            return true;
+            preStatement.execute(executeLine);
+            return null;
         }
         catch (Exception e)
         {
             System.out.println(e.getMessage());
-            throw new RuntimeException(e);
+            return e.getMessage();
         }
     }
 
@@ -178,28 +182,33 @@ public abstract class AbstractDataBase extends ObjUtil
     }
 
     //===========================================Update===========================================
-    protected boolean updateData(String url, String execute, DataBaseData whereData, List<DataBaseData> datas)
+    protected String updateData(String url, String execute, DataBaseData whereData, List<DataBaseData> datas)
     {
         Connection conn = getConnection(url);
-        if (conn == null) return false;
+        if (conn == null) throw new RuntimeException("Connection is null");
 
         try (PreparedStatement preStatement = conn.prepareStatement(execute))
         {
-            if (!this.setPreParedStatement(preStatement, whereData, 1)) return false;
+            if (!this.setPreParedStatement(preStatement, whereData, 1))
+            {
+                throw new RuntimeException("setPreParedStatement error");
+            }
             for (int i = 0; i < datas.size(); i++)
             {
-                if (!this.setPreParedStatement(preStatement, datas.get(i), i + 2)) return false;
+                if (!this.setPreParedStatement(preStatement, datas.get(i), i + 2)) 
+                {
+                    throw new RuntimeException("setPreParedStatement error");
+                }
             }
 
             preStatement.executeUpdate();
-            return true;
+            return null;
         }
         catch (Exception e)
         {
             System.out.println(e.getMessage());
-            throw new RuntimeException(e);
+            return e.getMessage();
         }
-
     }
 
     //===========================================Delete===========================================

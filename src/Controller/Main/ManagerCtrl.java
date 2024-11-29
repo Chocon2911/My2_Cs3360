@@ -10,17 +10,6 @@ public class ManagerCtrl extends AbstractAccountCtrl
     public ManagerCtrl() { super(); }
     public ManagerCtrl(String id) { super(id); }
 
-    //============================================Get=============================================
-    private Shop getShop() { return this.queryInfo().getShop(); }
-
-    //============================================Set=============================================
-    private void setShop(Shop shop) 
-    { 
-        Manager info = this.queryInfo();
-        info.setShop(shop); 
-        this.updateInfo(info);
-    }
-
     //==========================================Override==========================================  
     @Override
     protected Manager queryInfo() 

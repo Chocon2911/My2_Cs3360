@@ -11,7 +11,7 @@ public class RequestedItemDb extends AbstractDataBase
     {
         String sql = "CREATE TABLE IF NOT EXISTS RequestedItems"
                 + "("
-                + "Id TEXT PRIMARY KEY UNIQUE NOT NULL, "
+                + "Id TEXT PRIMARY KEY, "
                 + "ShopId TEXT NOT NULL, "
                 + "CustomerRequestId TEXT, "
                 + "CustomerId TEXT NOT NULL, "
@@ -22,7 +22,7 @@ public class RequestedItemDb extends AbstractDataBase
     }
 
     //===========================================Insert===========================================
-    public boolean insertRequestedItemData(RequestedItem requestedItem)
+    public String insertRequestedItemData(RequestedItem requestedItem)
     {
         String sql = "INSERT INTO RequestedItems "
                 + "(Id, ShopId, CustomerRequestId, CustomerId, ItemId, Amount) "
@@ -124,7 +124,7 @@ public class RequestedItemDb extends AbstractDataBase
     }
 
     //===========================================Update===========================================
-    public boolean updateRequestedItemData(RequestedItem requestedItem)
+    public String updateRequestedItemData(RequestedItem requestedItem)
     {
         String sql = "UPDATE RequestedItems SET * WHERE Id = ?";
 

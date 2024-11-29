@@ -4,7 +4,6 @@ import Controller.Base.AbstractAccountCtrl;
 import DataBase.Child.ShopDb;
 import Obj.Main.*;
 import java.awt.Font;
-import java.util.List;
 import javax.swing.*;
 
 public class ShopCtrl extends AbstractAccountCtrl
@@ -12,61 +11,6 @@ public class ShopCtrl extends AbstractAccountCtrl
     //========================================Constructor=========================================
     public ShopCtrl() { super(); }
     public ShopCtrl(String id) { super(id); }
-
-    //============================================Get=============================================
-	private String getSystemCode() { return this.queryInfo().getSystemCode(); }
-	private String getCheckInCode() { return this.queryInfo().getCheckInCode(); }
-	private List<Manager> getActiveManagers() { return this.queryInfo().getActiveManagers(); }
-	private List<Staff> getActiveStaffs() { return this.queryInfo().getActiveStaffs(); }
-	private List<Customer> getActiveCustomers() { return this.queryInfo().getActiveCustomers(); }
-	private List<Item> getItems() { return this.queryInfo().getItems(); }
-	private List<CustomerRequest> getCustomerRequests() { return this.queryInfo().getCustomerRequests(); }
-
-	//============================================Set=============================================
-	private void setSystemCode(String systemCode) 
-    {
-        Shop info = this.queryInfo();
-        info.setSystemCode(systemCode);
-        this.updateInfo(info);
-    }
-	private void setCheckInCode(String checkInCode) 
-    {
-        Shop info = this.queryInfo();
-        info.setCheckInCode(checkInCode);
-        this.updateInfo(info);
-    }
-	private void setActiveManagers(List<Manager> activeManagers) 
-    {
-        Shop info = this.queryInfo();
-        info.setActiveManagers(activeManagers);
-        this.updateInfo(info);
-    }
-    private void setActiveStaffs(List<Staff> activeStaffs) 
-    {
-        Shop info = this.queryInfo();
-        info.setActiveStaffs(activeStaffs);
-        this.updateInfo(info);
-    }
-	private void setActiveCustomers(List<Customer> activeCustomers) 
-    {
-        Shop info = this.queryInfo();
-        info.setActiveCustomers(activeCustomers);
-        this.updateInfo(info);
-    }
-	private void setItems(List<Item> items)
-    {
-        Shop info = this.queryInfo();
-        info.setItems(items);
-        this.updateInfo(info);
-    }
-	private void setCustomerRequests(List<CustomerRequest> customerRequests) 
-    {
-        Shop info = this.queryInfo();
-        info.setCustomerRequests(customerRequests);
-        this.updateInfo(info);
-    }
-
-
 
     //============================================================================================
     //========================================Information=========================================
@@ -128,12 +72,12 @@ public class ShopCtrl extends AbstractAccountCtrl
         titleLabel.setFont(new Font("Arial", Font.BOLD, this.normalTitleSize));
 
         // SystemCode Label
-        JLabel systemCodeLabel = new JLabel("System Code: " + this.getSystemCode());
+        JLabel systemCodeLabel = new JLabel("System Code: " + this.queryInfo().getSystemCode());
         this.setAlignmentCenter(systemCodeLabel);
         systemCodeLabel.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
 
         // CheckInCode Label
-        JLabel checkInCodeLabel = new JLabel("Check In Code: " + this.getCheckInCode());
+        JLabel checkInCodeLabel = new JLabel("Check In Code: " + this.queryInfo().getCheckInCode());
         this.setAlignmentCenter(checkInCodeLabel);
         checkInCodeLabel.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
 
@@ -185,51 +129,14 @@ public class ShopCtrl extends AbstractAccountCtrl
         activeManagersPanel.setLayout(new BoxLayout(activeManagersPanel, BoxLayout.Y_AXIS));
 
         int loop = 0;
-        for (Manager activeManager : this.getActiveManagers())
+        for (Manager activeManager : this.queryInfo().getActiveManagers())
         {
-            // Panel
-            JPanel activeManagerPanel = new JPanel();
-            activeManagerPanel.setLayout(new BoxLayout(activeManagerPanel, BoxLayout.Y_AXIS));
-            
-            // Title Label
-            JLabel titleManagerLabel = new JLabel("Manager " + (loop + 1));
-            this.setAlignmentCenter(titleManagerLabel);
-            titleManagerLabel.setFont(new Font("Arial", Font.BOLD, this.smallTitleSize));
+            JLabel label = new JLabel((loop + 1) + ". " + activeManager.getId());
+            this.setAlignmentCenter(label);
+            label.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
 
-            // Id Label
-            JLabel idLabel = new JLabel("Id: " + activeManager.getId());
-            this.setAlignmentCenter(idLabel);
-            idLabel.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
-
-            // Name Label
-            JLabel nameLabel = new JLabel("Name: " + activeManager.getName());
-            this.setAlignmentCenter(nameLabel);
-            nameLabel.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
-
-            // UserName Label
-            JLabel usernameLabel = new JLabel("Username: " + activeManager.getUserName());
-            this.setAlignmentCenter(usernameLabel);
-            usernameLabel.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
-
-            // Password Label
-            JLabel passwordLabel = new JLabel("Password: " + activeManager.getPassword());
-            this.setAlignmentCenter(passwordLabel);
-            passwordLabel.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
-
-            // Display
-            activeManagerPanel.add(Box.createVerticalStrut(this.verticalStrut));
-            activeManagerPanel.add(titleManagerLabel);
-            activeManagerPanel.add(Box.createVerticalStrut(this.verticalStrut));
-            activeManagerPanel.add(idLabel);
-            activeManagerPanel.add(Box.createVerticalStrut(this.verticalStrut));
-            activeManagerPanel.add(nameLabel);
-            activeManagerPanel.add(Box.createVerticalStrut(this.verticalStrut));
-            activeManagerPanel.add(usernameLabel);
-            activeManagerPanel.add(Box.createVerticalStrut(this.verticalStrut));
-            activeManagerPanel.add(passwordLabel);
-            activeManagerPanel.add(Box.createVerticalStrut(this.verticalStrut));
-
-            activeManagersPanel.add(activeManagerPanel);
+            activeManagersPanel.add(label);
+            activeManagersPanel.add(Box.createVerticalStrut(this.verticalStrut));
             loop++;
         }
 
@@ -274,62 +181,179 @@ public class ShopCtrl extends AbstractAccountCtrl
         activeStaffsPanel.setLayout(new BoxLayout(activeStaffsPanel, BoxLayout.Y_AXIS));
 
         int loop = 0;
-        for (Staff activeStaff : this.getActiveStaffs())
+        for (Staff activeStaff : this.queryInfo().getActiveStaffs())
         {
-            // Panel
-            JPanel activeStaffPanel = new JPanel();
-            activeStaffPanel.setLayout(new BoxLayout(activeStaffPanel, BoxLayout.Y_AXIS));
-            
-            // Title Label
-            JLabel titleStaffLabel = new JLabel("Staff " + (loop + 1));
-            this.setAlignmentCenter(titleStaffLabel);
-            titleStaffLabel.setFont(new Font("Arial", Font.BOLD, this.smallTitleSize));
+            JLabel label = new JLabel((loop + 1) + ". " + activeStaff.getId());
+            this.setAlignmentCenter(label);
+            label.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
 
-            // Id Label
-            JLabel idLabel = new JLabel("Id: " + activeStaff.getId());
-            this.setAlignmentCenter(idLabel);
-            idLabel.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
-
-            // Name Label
-            JLabel nameLabel = new JLabel("Name: " + activeStaff.getName());
-            this.setAlignmentCenter(nameLabel);
-            nameLabel.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
-
-            // UserName Label
-            JLabel usernameLabel = new JLabel("Username: " + activeStaff.getUserName());
-            this.setAlignmentCenter(usernameLabel);
-            usernameLabel.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
-
-            // Password Label
-            JLabel passwordLabel = new JLabel("Password: " + activeStaff.getPassword());
-            this.setAlignmentCenter(passwordLabel);            
-            passwordLabel.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
-
-            // CustomerRequests Label
-            List<CustomerRequest> customerRequests = this.getCustomerRequests();
-            for (int i = 0; i < customerRequests.size(); i++)
-            {
-                
-            }
-
-            // Display
-            activeStaffPanel.add(Box.createVerticalStrut(this.verticalStrut));
-            activeStaffPanel.add(titleStaffLabel);
-            activeStaffPanel.add(Box.createVerticalStrut(this.verticalStrut));
-            activeStaffPanel.add(idLabel);
-            activeStaffPanel.add(Box.createVerticalStrut(this.verticalStrut));
-            activeStaffPanel.add(nameLabel);
-            activeStaffPanel.add(Box.createVerticalStrut(this.verticalStrut));
-            activeStaffPanel.add(usernameLabel);
-            activeStaffPanel.add(Box.createVerticalStrut(this.verticalStrut));
-            activeStaffPanel.add(passwordLabel);
-            activeStaffPanel.add(Box.createVerticalStrut(this.verticalStrut));
-
-            activeStaffsPanel.add(activeStaffPanel);
+            activeStaffsPanel.add(label);
+            activeStaffsPanel.add(Box.createVerticalStrut(this.verticalStrut));
             loop++;
         }
 
         return activeStaffsPanel;
+    }
+
+    //======================================ActiveCustomers=======================================
+    private JPanel displayActiveCustomers()
+    {
+        // Panel
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        // Components
+        JLabel titleLabel = this.getTitleActiveCustomersLabel();
+        JPanel activeCustomersPanel = this.getActiveCustomersPanel();
+
+        // Display
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(this.verticalStrut));
+        panel.add(activeCustomersPanel);
+        
+        return panel;
+    }
+
+    // Title Label
+    private JLabel getTitleActiveCustomersLabel()
+    {
+        // Title Label
+        JLabel titleLabel = new JLabel("Active Customers");
+        this.setAlignmentCenter(titleLabel);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, this.normalTitleSize));
+        
+        return titleLabel;
+    }
+
+    // ActiveCustomers Panel
+    private JPanel getActiveCustomersPanel()
+    {
+        JPanel activeCustomersPanel = new JPanel();
+        activeCustomersPanel.setLayout(new BoxLayout(activeCustomersPanel, BoxLayout.Y_AXIS));
+
+        int loop = 0;
+        for (Customer activeCustomer : this.queryInfo().getActiveCustomers())
+        {
+            JLabel label = new JLabel((loop + 1) + ". " + activeCustomer.getId());
+            this.setAlignmentCenter(label);
+            label.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
+
+            activeCustomersPanel.add(label);
+            activeCustomersPanel.add(Box.createVerticalStrut(this.verticalStrut));
+            loop++;
+        }
+
+        return activeCustomersPanel;
+    }
+
+    //===========================================Items============================================
+    private JPanel displayItems()
+    {
+        // Panel
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        // Components
+        JLabel titleLabel = this.getTitleItemsLabel();
+        JPanel itemsPanel = this.getItemsPanel();
+
+        // Display
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(this.verticalStrut));
+        panel.add(itemsPanel);
+        
+        return panel;
+    }
+
+    // Title Label
+    private JLabel getTitleItemsLabel()
+    {
+        // Title Label
+        JLabel titleLabel = new JLabel("Items");
+        this.setAlignmentCenter(titleLabel);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, this.normalTitleSize));
+        
+        return titleLabel;
+    }
+
+    // Items Panel
+    private JPanel getItemsPanel()
+    {
+        JPanel itemsPanel = new JPanel();
+        itemsPanel.setLayout(new BoxLayout(itemsPanel, BoxLayout.Y_AXIS));
+
+        int loop = 0;
+        for (Item item : this.queryInfo().getItems())
+        {
+            JLabel label = new JLabel((loop + 1) + ". " + item.getId());
+            this.setAlignmentCenter(label);
+            label.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
+
+            itemsPanel.add(label);
+            itemsPanel.add(Box.createVerticalStrut(this.verticalStrut));
+            loop++;
+        }
+
+        return itemsPanel;
+    }
+
+    //======================================CustomerRequests======================================
+    private JPanel displayCustomerRequests()
+    {
+        // Panel
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        // Components
+        JLabel titleLabel = this.getTitleCustomerRequestsLabel();
+        JPanel customerRequestsPanel = this.getCustomerRequestsPanel();
+
+        // Display
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(this.verticalStrut));
+        panel.add(customerRequestsPanel);
+        
+        return panel;
+    }
+
+    // Title Label
+    private JLabel getTitleCustomerRequestsLabel()
+    {
+        // Title Label
+        JLabel titleLabel = new JLabel("Customer Requests");
+        this.setAlignmentCenter(titleLabel);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, this.normalTitleSize));
+        
+        return titleLabel;
+    }
+
+    // CustomerRequests Panel
+    private JPanel getCustomerRequestsPanel()
+    {
+        JPanel customerRequestsPanel = new JPanel();
+        customerRequestsPanel.setLayout(new BoxLayout(customerRequestsPanel, BoxLayout.Y_AXIS));
+
+        int loop = 0;
+        for (CustomerRequest customerRequest : this.queryInfo().getCustomerRequests())
+        {
+            JLabel label = new JLabel((loop + 1) + ". " + customerRequest.getId());
+            this.setAlignmentCenter(label);
+            label.setFont(new Font("Arial", Font.BOLD, this.normalTextSize));
+
+            customerRequestsPanel.add(label);
+            customerRequestsPanel.add(Box.createVerticalStrut(this.verticalStrut));
+            loop++;
+        }
+
+        return customerRequestsPanel;
+    }
+
+    //============================================================================================
+    //=======================================Create Manager=======================================
+    //============================================================================================
+    public boolean createManager(String name, String userName, String password)
+    {
+           
     }
 
     
@@ -348,30 +372,3 @@ public class ShopCtrl extends AbstractAccountCtrl
         new ShopDb().updateShopData((Shop)info);
     }
 }
-
-
-
-// // ActiveManagers Label
-// JLabel activeManagersLabel = new JLabel("Active Managers");
-// this.setAlignmentCenter(activeManagersLabel);
-// activeManagersLabel.setFont(new Font("Arial", Font.BOLD, this.normalTitleSize));
-
-// // ActiveStaffs Label
-// JLabel activeStaffsLabel = new JLabel("Active Staffs");
-// this.setAlignmentCenter(activeStaffsLabel);
-// activeStaffsLabel.setFont(new Font("Arial", Font.BOLD, this.normalTitleSize));
-
-// // ActiveCustomers Label
-// JLabel activeCustomersLabel = new JLabel("Active Customers");
-// this.setAlignmentCenter(activeCustomersLabel);
-// activeCustomersLabel.setFont(new Font("Arial", Font.BOLD, this.normalTitleSize));
-
-// // Items Label
-// JLabel itemsLabel = new JLabel("Items");
-// this.setAlignmentCenter(itemsLabel);
-// itemsLabel.setFont(new Font("Arial", Font.BOLD, this.normalTitleSize));
-
-// // CustomerRequests Label
-// JLabel customerRequestsLabel = new JLabel("Customer Requests");
-// this.setAlignmentCenter(customerRequestsLabel);
-// customerRequestsLabel.setFont(new Font("Arial", Font.BOLD, this.normalTitleSize));

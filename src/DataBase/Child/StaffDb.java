@@ -14,9 +14,9 @@ public class StaffDb extends AbstractDataBase
     {
         String sql = "CREATE TABLE IF NOT EXISTS Staffs"
                 + "("
-                + "Id TEXT PRIMARY KEY UNIQUE NOT NULL, "
+                + "Id TEXT PRIMARY KEY, "
                 + "Name TEXT NOT NULL, "
-                + "UserName TEXT NOT NULL, "
+                + "UserName TEXT UNIQUE NOT NULL, "
                 + "Password TEXT NOT NULL, "
                 + "IsLogin INTEGER NOT NULL, "
                 + "ShopId TEXT"
@@ -26,7 +26,7 @@ public class StaffDb extends AbstractDataBase
     }
 
     //===========================================Insert===========================================
-    public boolean insertStaffData(Staff staff)
+    public String insertStaffData(Staff staff)
     {
         String sql = "INSERT INTO Staffs "
                 + "(Id, Name, UserName, Password, IsLogin, ShopId) "
@@ -70,7 +70,7 @@ public class StaffDb extends AbstractDataBase
         return staffs;
     }
     //===========================================Update===========================================
-    public boolean updateStaffData(Staff staff)
+    public String updateStaffData(Staff staff)
     {
         String sql = "UPDATE Staffs SET * WHERE Id = ?";
 

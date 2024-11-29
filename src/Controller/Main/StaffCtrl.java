@@ -10,17 +10,6 @@ public class StaffCtrl extends AbstractAccountCtrl
     public StaffCtrl() { super(); }
     public StaffCtrl(String id) { super(id); }
 
-    //============================================Get=============================================
-    private Shop getShop() { return this.queryInfo().getShop(); }
-
-    //============================================Set=============================================
-    private void setShop(Shop shop) 
-    { 
-        Staff info = this.queryInfo();
-        info.setShop(shop); 
-        this.updateInfo(info);
-    }
-
     //==========================================Override==========================================
     @Override
     protected Staff queryInfo()
