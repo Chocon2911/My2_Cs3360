@@ -1,10 +1,10 @@
 package DataBase.Child;
 
 import DataBase.Base.*;
-import Obj.Main.*;
+import Obj.Data.*;
 import java.util.*;
 
-public class CustomerRequestDb extends AbstractDataBase
+public class CustomerRequestDb extends AbstractDb
 {
     //========================================Create Table========================================
     public boolean createCustomerRequestTable()
@@ -12,11 +12,12 @@ public class CustomerRequestDb extends AbstractDataBase
         String sql = "CREATE TABLE IF NOT EXISTS CustomerRequests"
                 + "("
                 + "Id TEXT PRIMARY KEY, "
-                + "Name TEXT NOT NULL, "
-                + "ShopId TEXT NOT NULL, "
-                + "RequestedCustomerId TEXT NOT NULL, "
-                + "HandledStaffId TEXT NOT NULL, "
-                + "IsSold INTEGER NOT NULL"
+                + "Name TEXT, "
+                + "ShopId TEXT, "
+                + "RequestedCustomerId TEXT, "
+                + "HandledStaffId TEXT, "
+                + "IsSold INTEGER, "
+                + "FOREIGN KEY (Id) REFERENCES ids (GlobalId)"
                 + ");";
 
             return this.createTable(url, sql);
@@ -29,19 +30,26 @@ public class CustomerRequestDb extends AbstractDataBase
                 + "(Id, Name, ShopId, RequestedCustomerId, HandledStaffId, IsSold) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
 
-        List<DataBaseData> data = this.getDataFromCustomerRequest(customerRequest);
-        return this.insertData(url, sql, data);
+        List<DbData> data = this.getDataFromCustomerRequest(customerRequest);
+        String result = this.insertData(url, sql, data);
+        if (result == null) 
+        {
+            String idE = new IdDb().insertId(customerRequest.getId());
+            if (idE != null) return idE; 
+        }
+
+        return result;
     }
 
     //===========================================Query============================================
     public CustomerRequest queryCustomerRequestData(String id)
     {
         String sql = "SELECT * FROM CustomerRequests WHERE Id = ?";
-        DataBaseData queryData = new DataBaseData(id);
+        DbData queryData = new DbData(id);
         List<String> rowNames = this.getCustomerRequestRowNames();
-        List<DataBaseType> rowTypes = this.getCustomerRequestRowTypes();
+        List<DbType> rowTypes = this.getCustomerRequestRowTypes();
 
-        List<List<DataBaseData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
 
         return this.getCustomerRequest(datas.get(0));
@@ -50,11 +58,11 @@ public class CustomerRequestDb extends AbstractDataBase
     public List<CustomerRequest> queryCustomerRequestsByShopId(String shopId)
     {
         String sql = "SELECT * FROM CustomerRequests WHERE ShopId = ?";
-        DataBaseData queryData = new DataBaseData(shopId);
+        DbData queryData = new DbData(shopId);
         List<String> rowNames = this.getCustomerRequestRowNames();
-        List<DataBaseType> rowTypes = this.getCustomerRequestRowTypes();
+        List<DbType> rowTypes = this.getCustomerRequestRowTypes();
 
-        List<List<DataBaseData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
 
         List<CustomerRequest> customerRequests = new ArrayList<>();
@@ -69,11 +77,11 @@ public class CustomerRequestDb extends AbstractDataBase
     public List<CustomerRequest> queryCustomerRequestsByCustomerId(String customerId)
     {
         String sql = "SELECT * FROM CustomerRequests WHERE RequestedCustomerId = ?";
-        DataBaseData queryData = new DataBaseData(customerId);
+        DbData queryData = new DbData(customerId);
         List<String> rowNames = this.getCustomerRequestRowNames();
-        List<DataBaseType> rowTypes = this.getCustomerRequestRowTypes();
+        List<DbType> rowTypes = this.getCustomerRequestRowTypes();
 
-        List<List<DataBaseData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
 
         List<CustomerRequest> customerRequests = new ArrayList<>();
@@ -90,19 +98,25 @@ public class CustomerRequestDb extends AbstractDataBase
     {
         String sql = "UPDATE CustomerRequests SET * WHERE Id = ?";
 
-        List<DataBaseData> data = this.getDataFromCustomerRequest(customerRequest);
-        DataBaseData id = data.get(0);
+        List<DbData> data = this.getDataFromCustomerRequest(customerRequest);
+        DbData id = data.get(0);
         data.remove(0);
 
         return this.updateData(url, sql, id, data);
     }
 
     //===========================================Delete===========================================
-    public boolean deleteCustomerRequestData(String id)
+    public boolean deleteCustomerRequestData(CustomerRequest customerRequest)
     {
         String sql = "DELETE FROM CustomerRequests WHERE Id = ?";
-        DataBaseData idData = new DataBaseData(id);
-        return this.deleteRow(url, sql, idData);
+        DbData idData = new DbData(customerRequest.getId());
+        boolean result = this.deleteRow(url, sql, idData);
+        if (result) 
+        {
+            new IdDb().deleteId(customerRequest.getId());
+        }
+
+        return result;
     }
 
     //===========================================Other============================================
@@ -120,20 +134,20 @@ public class CustomerRequestDb extends AbstractDataBase
         return rowNames;
     }
 
-    private List<DataBaseType> getCustomerRequestRowTypes()
+    private List<DbType> getCustomerRequestRowTypes()
     {
-        List<DataBaseType> rowTypes = new ArrayList<>();
-        rowTypes.add(DataBaseType.TEXT);    // Id
-        rowTypes.add(DataBaseType.TEXT);    // Name
-        rowTypes.add(DataBaseType.TEXT);    // ShopId
-        rowTypes.add(DataBaseType.TEXT);    // RequestedCustomer
-        rowTypes.add(DataBaseType.TEXT);    // HandledStaff
-        rowTypes.add(DataBaseType.INTEGER); // IsSold
+        List<DbType> rowTypes = new ArrayList<>();
+        rowTypes.add(DbType.TEXT);    // Id
+        rowTypes.add(DbType.TEXT);    // Name
+        rowTypes.add(DbType.TEXT);    // ShopId
+        rowTypes.add(DbType.TEXT);    // RequestedCustomer
+        rowTypes.add(DbType.TEXT);    // HandledStaff
+        rowTypes.add(DbType.INTEGER); // IsSold
 
         return rowTypes;
     }
 
-    private CustomerRequest getCustomerRequest(List<DataBaseData> data)
+    private CustomerRequest getCustomerRequest(List<DbData> data)
     {
         String id = data.get(0).getValueStr();
         String name = data.get(1).getValueStr();
@@ -150,16 +164,16 @@ public class CustomerRequestDb extends AbstractDataBase
     }
 
     // Update - Insert
-    private List<DataBaseData> getDataFromCustomerRequest(CustomerRequest customerRequest)
+    private List<DbData> getDataFromCustomerRequest(CustomerRequest customerRequest)
     {
-        DataBaseData id = new DataBaseData(customerRequest.getId());
-        DataBaseData name = new DataBaseData(customerRequest.getName());
-        DataBaseData shopId = new DataBaseData(customerRequest.getShop().getId());
-        DataBaseData requestedCustomerId = new DataBaseData(customerRequest.getRequestedCustomer().getId());
-        DataBaseData handledStaffId = new DataBaseData(customerRequest.getHandledStaff().getId());
-        DataBaseData isSold = new DataBaseData(customerRequest.getIsSold() ? 1 : 0);
+        DbData id = new DbData(customerRequest.getId());
+        DbData name = new DbData(customerRequest.getName());
+        DbData shopId = new DbData(customerRequest.getShop().getId());
+        DbData requestedCustomerId = new DbData(customerRequest.getRequestedCustomer().getId());
+        DbData handledStaffId = new DbData(customerRequest.getHandledStaff().getId());
+        DbData isSold = new DbData(customerRequest.getIsSold() ? 1 : 0);
 
-        List<DataBaseData> data = new ArrayList<>();
+        List<DbData> data = new ArrayList<>();
         data.add(id);
         data.add(name);        
         data.add(shopId);

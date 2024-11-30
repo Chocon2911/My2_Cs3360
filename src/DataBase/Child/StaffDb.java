@@ -1,13 +1,14 @@
 package DataBase.Child;
 
-import DataBase.Base.AbstractDataBase;
-import DataBase.Base.DataBaseData;
-import DataBase.Base.DataBaseType;
-import Obj.Main.Shop;
-import Obj.Main.Staff;
+import DataBase.Base.AbstractDb;
+import DataBase.Base.DbData;
+import DataBase.Base.DbType;
+import Obj.Data.Shop;
+import Obj.Data.Staff;
+
 import java.util.*;
 
-public class StaffDb extends AbstractDataBase
+public class StaffDb extends AbstractDb
 {
     //========================================Create Table========================================
     public boolean createStaffTable()
@@ -15,13 +16,14 @@ public class StaffDb extends AbstractDataBase
         String sql = "CREATE TABLE IF NOT EXISTS Staffs"
                 + "("
                 + "Id TEXT PRIMARY KEY, "
-                + "Name TEXT NOT NULL, "
-                + "UserName TEXT UNIQUE NOT NULL, "
-                + "Password TEXT NOT NULL, "
-                + "IsLogin INTEGER NOT NULL, "
-                + "ShopId TEXT"
+                + "Name TEXT, "
+                + "UserName TEXT UNIQUE, "
+                + "Password TEXT, "
+                + "ShopId TEXT, "
+                + "FOREIGN KEY (Id) REFERENCES ids (GlobalId), "
+                + "FOREIGN KEY (UserName) REFERENCES userNames (GlobalUserName)"
                 + ");";
-
+        
         return this.createTable(url, sql);
     }
 
@@ -29,22 +31,32 @@ public class StaffDb extends AbstractDataBase
     public String insertStaffData(Staff staff)
     {
         String sql = "INSERT INTO Staffs "
-                + "(Id, Name, UserName, Password, IsLogin, ShopId) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+                + "(Id, Name, UserName, Password, ShopId) "
+                + "VALUES (?, ?, ?, ?, ?)";
 
-        List<DataBaseData> data = this.getDataFromStaff(staff);
-        return this.insertData(url, sql, data);
+        List<DbData> data = this.getDataFromStaff(staff);
+        String result = this.insertData(url, sql, data);
+        if (result == null)
+        {
+            String idE = new IdDb().insertId(staff.getId());
+            if (idE != null) return idE;
+
+            String userNameE = new UserNameDb().insertUserName(staff.getUserName());
+            if (userNameE != null) return userNameE;
+        }
+
+        return result;
     }
 
     //===========================================Query============================================
     public Staff queryStaffData(String id)
     {
-        DataBaseData queryData = new DataBaseData(id);
+        DbData queryData = new DbData(id);
         String sql = "SELECT * FROM Staffs WHERE Id = ?";
         List<String> rowNames = this.getStaffRowNames();
-        List<DataBaseType> rowTypes = this.getStaffRowTypes();
+        List<DbType> rowTypes = this.getStaffRowTypes();
 
-        List<List<DataBaseData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
 
         return this.getStaff(datas.get(0));
@@ -52,13 +64,16 @@ public class StaffDb extends AbstractDataBase
 
     public List<Staff> queryStaffsByShopId(String shopId)
     {
-        DataBaseData queryData = new DataBaseData(shopId);
+        DbData queryData = new DbData(shopId);
         String sql = "SELECT * FROM Staffs WHERE ShopId = ?";
         List<String> rowNames = this.getStaffRowNames();
-        List<DataBaseType> rowTypes = this.getStaffRowTypes();
+        List<DbType> rowTypes = this.getStaffRowTypes();
 
-        List<List<DataBaseData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
-        if (datas.isEmpty()) return null;
+        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        if (!datas.isEmpty()) {
+        } else {
+            return null;
+        }
 
         List<Staff> staffs;
         staffs = new ArrayList<>();
@@ -74,8 +89,8 @@ public class StaffDb extends AbstractDataBase
     {
         String sql = "UPDATE Staffs SET * WHERE Id = ?";
 
-        List<DataBaseData> data = this.getDataFromStaff(staff);
-        DataBaseData id = data.get(0);
+        List<DbData> data = this.getDataFromStaff(staff);
+        DbData id = data.get(0);
         data.remove(0);
 
         return this.updateData(url, sql, id, data);
@@ -85,8 +100,15 @@ public class StaffDb extends AbstractDataBase
     public boolean deleteStaffData(String id)
     {
         String sql = "DELETE FROM Staffs WHERE Id = ?";
-        DataBaseData idData = new DataBaseData(id);
-        return this.deleteRow(url, sql, idData);
+        DbData idData = new DbData(id);
+        boolean result = this.deleteRow(url, sql, idData);
+        if (result)
+        {
+            new IdDb().deleteId(id);
+            new UserNameDb().deleteUserName(id);
+        }
+
+        return result;
     }
 
     //===========================================Other============================================
@@ -98,54 +120,49 @@ public class StaffDb extends AbstractDataBase
         rowNames.add("Name");
         rowNames.add("UserName");
         rowNames.add("Password");
-        rowNames.add("IsLogin");
         rowNames.add("ShopId");
 
         return rowNames;
     }
 
-    private List<DataBaseType> getStaffRowTypes()
+    private List<DbType> getStaffRowTypes()
     {
-        List<DataBaseType> rowTypes = new ArrayList<>();
-        rowTypes.add(DataBaseType.TEXT);    // Id
-        rowTypes.add(DataBaseType.TEXT);    // Name
-        rowTypes.add(DataBaseType.TEXT);    // UserName
-        rowTypes.add(DataBaseType.TEXT);    // Password
-        rowTypes.add(DataBaseType.INTEGER); // IsLogin
-        rowTypes.add(DataBaseType.TEXT);    // ShopId
+        List<DbType> rowTypes = new ArrayList<>();
+        rowTypes.add(DbType.TEXT);    // Id
+        rowTypes.add(DbType.TEXT);    // Name
+        rowTypes.add(DbType.TEXT);    // UserName
+        rowTypes.add(DbType.TEXT);    // Password
+        rowTypes.add(DbType.TEXT);    // ShopId
 
         return rowTypes;
     }
 
-    private Staff getStaff(List<DataBaseData> data)
+    private Staff getStaff(List<DbData> data)
     {
         String id = data.get(0).getValueStr();
         String name = data.get(1).getValueStr();
         String userName = data.get(2).getValueStr();
         String password = data.get(3).getValueStr();
-        boolean isLogin = data.get(4).getValueInt() == 1;
-        String shopId = data.get(5).getValueStr();
+        String shopId = data.get(4).getValueStr();
 
         Shop shop = new ShopDb().queryShopData(shopId);
-        return new Staff(id, name, userName, password, isLogin, shop);
+        return new Staff(id, name, userName, password, shop);
     }
 
     // Update - Insert
-    private List<DataBaseData> getDataFromStaff(Staff staff)
+    private List<DbData> getDataFromStaff(Staff staff)
     {
-        DataBaseData id = new DataBaseData(staff.getId());
-        DataBaseData name = new DataBaseData(staff.getName());
-        DataBaseData userName = new DataBaseData(staff.getUserName());
-        DataBaseData password = new DataBaseData(staff.getPassword());
-        DataBaseData isLogin = new DataBaseData(staff.getIsLogin() ? 1 : 0);
-        DataBaseData shopId = new DataBaseData(staff.getShop().getId());
+        DbData id = new DbData(staff.getId());
+        DbData name = new DbData(staff.getName());
+        DbData userName = new DbData(staff.getUserName());
+        DbData password = new DbData(staff.getPassword());
+        DbData shopId = new DbData(staff.getShop().getId());
 
-        List<DataBaseData> data = new ArrayList<>();
+        List<DbData> data = new ArrayList<>();
         data.add(id);
         data.add(name);
         data.add(userName);
         data.add(password);
-        data.add(isLogin);
         data.add(shopId);
 
         return data;

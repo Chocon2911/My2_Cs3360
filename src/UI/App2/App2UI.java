@@ -1,17 +1,20 @@
 package UI.App2;
 
+import DataBase.Child.*;
+import Obj.Controller.App2Ctrl;
 import Util.GuiUtil;
-
 import java.awt.Font;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.*;
 
 public class App2UI extends GuiUtil
 {
+    private App2Ctrl ctrl;
+
     //========================================Constructor=========================================
     public App2UI()
     {
+        this.ctrl = new App2Ctrl();
         this.displayMain();
     }
 
@@ -36,40 +39,28 @@ public class App2UI extends GuiUtil
         // Login Button
         JButton loginButton = createButton("Login", bigButtonWidth, bigButtonHeight);
         this.setAlignmentCenter(loginButton);
-        loginButton.addActionListener(new ActionListener()
+        loginButton.addActionListener((ActionEvent e) -> 
         {
-            @Override
-            public void actionPerformed(ActionEvent e) 
-            {
-                frame.dispose();
-                displayLogin();
-            }
+            frame.dispose();
+            displayLogin();
         });
 
         // SignUp Button
         JButton signUpButton = createButton("Sign Up", bigButtonWidth, bigButtonHeight);
         this.setAlignmentCenter(signUpButton);
-        signUpButton.addActionListener(new ActionListener()
+        signUpButton.addActionListener((ActionEvent e) -> 
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                frame.dispose();
-                displaySignUp();
-            }
+            frame.dispose();
+            displaySignUp();
         });
         
         // Quit Button
         JButton quitButton = createButton("Quit", bigButtonWidth, bigButtonHeight);
         this.setAlignmentCenter(quitButton);
-        quitButton.addActionListener(new ActionListener()
+        quitButton.addActionListener((ActionEvent e) -> 
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                frame.dispose();
-                displayQuit();
-            }
+            frame.dispose();
+            displayQuit();
         });
 
         // Display
@@ -163,32 +154,41 @@ public class App2UI extends GuiUtil
         // Cancel Button
         JButton cancelButton = createButton("Cancel", smallButtonWidth, smallButtonHeight);
         this.setAlignmentCenter(cancelButton);
-        cancelButton.addActionListener(new ActionListener() 
+        cancelButton.addActionListener((ActionEvent e) -> 
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                frame.dispose();
-                displayMain();
-            }    
+            frame.dispose();
+            displayMain();    
         });
         
         // Login Button
         JButton loginButton = createButton("Login", smallButtonWidth, smallButtonHeight);
         this.setAlignmentCenter(loginButton);
-        loginButton.addActionListener(new ActionListener() 
+        loginButton.addActionListener((ActionEvent e) -> 
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                String userName = userNameTextField.getText();
-                String password = String.valueOf(passwordTextField.getPassword());
+            String userName = userNameTextField.getText();
+            String password = String.valueOf(passwordTextField.getPassword());
+            
+            System.out.println("UserName: " + userName);
+            System.out.println("Password: " + password);
+            
+            int login = this.ctrl.login(userName, password);
 
-                System.out.println("UserName: " + userName);
-                System.out.println("Password: " + password);
-                
-                JOptionPane.showMessageDialog(null, "Login");
-            }    
+            if (login == 0)
+            {
+                System.out.println("Login Success");
+                JOptionPane.showMessageDialog(null, "Login Success");
+                frame.dispose();
+                new ShopUI(ctrl.getIdByUserName(userName));
+            }
+
+            else if (login == 1) 
+            {
+                JOptionPane.showMessageDialog(null, "User Name Not Found");
+            }
+            else if (login == 2) 
+            {
+                JOptionPane.showMessageDialog(null, "Password Wrong");
+            }
         });
 
         // Display 
@@ -358,41 +358,41 @@ public class App2UI extends GuiUtil
         // Cancel Button
         JButton cancelButton = createButton("Cancel", smallButtonWidth, smallButtonHeight);
         this.setAlignmentCenter(cancelButton);
-        cancelButton.addActionListener(new ActionListener()
+        cancelButton.addActionListener((ActionEvent e) -> 
         {
-            @Override
-            public void actionPerformed(ActionEvent e) 
-            {
-                frame.dispose();
-                displayMain();
-            }
+            frame.dispose();
+            displayMain();
         });
 
         // Register Button
         JButton registerButton = createButton("Register", smallButtonWidth, smallButtonHeight);
         this.setAlignmentCenter(registerButton);
-        registerButton.addActionListener(new ActionListener()
+        registerButton.addActionListener((ActionEvent e) -> 
         {
-            @Override
-            public void actionPerformed(ActionEvent e) 
+            frame.dispose();
+            
+            String name = nameField.getText();
+            String userName = userNameField.getText();
+            String password = String.valueOf(passwordField.getPassword());
+            String systemCode = systemCodeField.getText();
+            String checkInCode = checkInCodeField.getText();
+            
+            System.out.println("Name: " + name);
+            System.out.println("UserName: " + userName);
+            System.out.println("Password: " + password);
+            System.out.println("SystemCode: " + systemCode);
+            System.out.println("CheckInCode: " + checkInCode);
+
+            int signUp = this.ctrl.signUp(name, userName, password, checkInCode, systemCode);
+            if (signUp == 1)
             {
-                frame.dispose();
-                
-                String name = nameField.getText();
-                String userName = userNameField.getText();
-                String password = String.valueOf(passwordField.getPassword());
-                String systemCode = systemCodeField.getText();
-                String checkInCode = checkInCodeField.getText();
-
-                System.out.println("Name: " + name);
-                System.out.println("UserName: " + userName);
-                System.out.println("Password: " + password);
-                System.out.println("SystemCode: " + systemCode);
-                System.out.println("CheckInCode: " + checkInCode);
-
-                System.out.println("Name: " + name + " - " + "UserName: " + userName + " - " + "Password: " + password + " - " + "SystemCode: " + systemCode + " - " + "CheckInCode: " + checkInCode);
+                JOptionPane.showMessageDialog(null, "User Name already exists");
+            }
+            
+            else 
+            {
                 JOptionPane.showMessageDialog(null, "Register Success");
-
+                frame.dispose();
                 displayMain();
             }
         });
@@ -436,6 +436,16 @@ public class App2UI extends GuiUtil
     //============================================Test============================================
     public static void main(String[] args) 
     {
+        new IdDb().createIdTable();
+        new UserNameDb().createUserNameTable();
+        new ShopDb().createShopTable();
+        new CustomerDb().createCustomerTable();
+        new StaffDb().createStaffTable();
+        new ManagerDb().createManagerTable();
+        new ItemDb().createItemTable();
+        new RequestedItemDb().createRequestedItemTable();
+        new CustomerRequestDb().createCustomerRequestTable();
+
         new App2UI();
     }
 }

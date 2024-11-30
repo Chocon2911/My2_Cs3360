@@ -1,10 +1,11 @@
 package DataBase.Child;
 
 import DataBase.Base.*;
-import Obj.Main.*;
+import Obj.Data.*;
+
 import java.util.*;
 
-public class ItemDb extends AbstractDataBase
+public class ItemDb extends AbstractDb
 {
     //========================================Create Table========================================
     public boolean createItemTable()
@@ -12,12 +13,13 @@ public class ItemDb extends AbstractDataBase
         String sql = "CREATE TABLE IF NOT EXISTS Items"
                 + "("
                 + "Id TEXT PRIMARY KEY, "
-                + "Name TEXT NOT NULL, "
-                + "ShopId TEXT NOT NULL, "
-                + "Price FLOAT NOT NULL, "
-                + "InitAmount INTEGER NOT NULL, "
-                + "ItemType INTEGER NOT NULL, "
-                + "Description TEXT"
+                + "Name TEXT, "
+                + "ShopId TEXT, "
+                + "Price FLOAT, "
+                + "InitAmount INTEGER, "
+                + "ItemType INTEGER, "
+                + "Description TEXT, "
+                + "FOREIGN KEY (Id) REFERENCES ids (GlobalId)"
                 + ");";
 
         return this.createTable(url, sql);
@@ -30,19 +32,26 @@ public class ItemDb extends AbstractDataBase
                 + "(Id, Name, ShopId, Price, InitAmount, ItemType, Description) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-        List<DataBaseData> data = this.getDataFromItem(item);
-        return this.insertData(url, sql, data);
+        List<DbData> data = this.getDataFromItem(item);
+        String result = this.insertData(url, sql, data);
+        if (result == null) 
+        {
+            String idE = new IdDb().insertId(item.getId());
+            if (idE != null) return idE;
+        }
+
+        return result;
     }
 
     //===========================================Query============================================
     public Item queryItemData(String id)
     {
-        DataBaseData queryData = new DataBaseData(id);
+        DbData queryData = new DbData(id);
         String sql = "SELECT * FROM Items WHERE Id = ?";
         List<String> rowNames = this.getItemRowNames();
-        List<DataBaseType> rowTypes = this.getItemsRowTypes();
+        List<DbType> rowTypes = this.getItemsRowTypes();
 
-        List<List<DataBaseData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
 
         return this.getItem(datas.get(0));
@@ -50,12 +59,12 @@ public class ItemDb extends AbstractDataBase
 
     public List<Item> queryItemsByShopId(String shopId)
     {
-        DataBaseData queryData = new DataBaseData(shopId);
+        DbData queryData = new DbData(shopId);
         String sql = "SELECT * FROM Items WHERE ShopId = ?";
         List<String> rowNames = this.getItemRowNames();
-        List<DataBaseType> rowTypes = this.getItemsRowTypes();
+        List<DbType> rowTypes = this.getItemsRowTypes();
 
-        List<List<DataBaseData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
 
         List<Item> items = new ArrayList<>();
@@ -72,22 +81,26 @@ public class ItemDb extends AbstractDataBase
     {
         String sql = "UPDATE Items SET * WHERE Id = ?";
 
-        List<DataBaseData> data = this.getDataFromItem(item);
-        DataBaseData id = data.get(0);
+        List<DbData> data = this.getDataFromItem(item);
+        DbData id = data.get(0);
         data.remove(0);
 
         return this.updateData(url, sql, id, data);
     }
 
     //===========================================Delete===========================================
-    public boolean deleteItemData(String id)
+    public boolean deleteItemData(Item item)
     {
         String sql = "DELETE FROM Items WHERE Id = ?";
+        DbData idDb = new DbData();
+        idDb.setValueStr(item.getId());
+        boolean result = this.deleteRow(url, sql, idDb);
+        if (result) 
+        {
+            new IdDb().deleteId(item.getId());
+        }
 
-        DataBaseData idDb = new DataBaseData();
-        idDb.setValueStr(id);
-
-        return this.deleteRow(url, sql, idDb);
+        return result;
     }
 
     //===========================================Other============================================
@@ -107,21 +120,21 @@ public class ItemDb extends AbstractDataBase
         return rowNames;
     }
     
-    private List<DataBaseType> getItemsRowTypes()
+    private List<DbType> getItemsRowTypes()
     {
-        List<DataBaseType> rowTypes = new ArrayList<>();
-        rowTypes.add(DataBaseType.TEXT);    // Id
-        rowTypes.add(DataBaseType.TEXT);    // Name
-        rowTypes.add(DataBaseType.TEXT);    // ShopId
-        rowTypes.add(DataBaseType.FLOAT);   // Price
-        rowTypes.add(DataBaseType.INTEGER); // InitAmount
-        rowTypes.add(DataBaseType.INTEGER); // ItemType
-        rowTypes.add(DataBaseType.TEXT);    // Description
+        List<DbType> rowTypes = new ArrayList<>();
+        rowTypes.add(DbType.TEXT);    // Id
+        rowTypes.add(DbType.TEXT);    // Name
+        rowTypes.add(DbType.TEXT);    // ShopId
+        rowTypes.add(DbType.FLOAT);   // Price
+        rowTypes.add(DbType.INTEGER); // InitAmount
+        rowTypes.add(DbType.INTEGER); // ItemType
+        rowTypes.add(DbType.TEXT);    // Description
 
         return rowTypes;
     }
 
-    private Item getItem(List<DataBaseData> data)
+    private Item getItem(List<DbData> data)
     {
         String id = data.get(0).getValueStr();
         String name = data.get(1).getValueStr();
@@ -138,17 +151,17 @@ public class ItemDb extends AbstractDataBase
     }
 
     // Update - Insert
-    private List<DataBaseData> getDataFromItem(Item item)
+    private List<DbData> getDataFromItem(Item item)
     {
-        DataBaseData id = new DataBaseData(item.getId());
-        DataBaseData name = new DataBaseData(item.getName());
-        DataBaseData shopId = new DataBaseData(item.getShop().getId());
-        DataBaseData price = new DataBaseData(item.getPrice());
-        DataBaseData initAmount = new DataBaseData(item.getInitAmount());
-        DataBaseData itemType = new DataBaseData(item.getItemType().ordinal());
-        DataBaseData description = new DataBaseData(item.getDescription());
+        DbData id = new DbData(item.getId());
+        DbData name = new DbData(item.getName());
+        DbData shopId = new DbData(item.getShop().getId());
+        DbData price = new DbData(item.getPrice());
+        DbData initAmount = new DbData(item.getInitAmount());
+        DbData itemType = new DbData(item.getItemType().ordinal());
+        DbData description = new DbData(item.getDescription());
 
-        List<DataBaseData> data = new ArrayList<>();
+        List<DbData> data = new ArrayList<>();
         data.add(id);
         data.add(name);
         data.add(shopId);

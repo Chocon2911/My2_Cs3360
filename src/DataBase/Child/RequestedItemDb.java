@@ -1,10 +1,11 @@
 package DataBase.Child;
 
 import DataBase.Base.*;
-import Obj.Main.*;
+import Obj.Data.*;
+
 import java.util.*;
 
-public class RequestedItemDb extends AbstractDataBase
+public class RequestedItemDb extends AbstractDb
 {
     //========================================Create Table========================================
     public boolean createRequestedItemTable()
@@ -12,11 +13,13 @@ public class RequestedItemDb extends AbstractDataBase
         String sql = "CREATE TABLE IF NOT EXISTS RequestedItems"
                 + "("
                 + "Id TEXT PRIMARY KEY, "
-                + "ShopId TEXT NOT NULL, "
+                + "ShopId TEXT, "
                 + "CustomerRequestId TEXT, "
-                + "CustomerId TEXT NOT NULL, "
-                + "ItemId TEXT NOT NULL, "
-                + "Amount INTEGER NOT NULL, ";
+                + "CustomerId TEXT, "
+                + "ItemId TEXT, "
+                + "Amount INTEGER, "
+                + "FOREIGN KEY (Id) REFERENCES ids (GlobalId)"
+                + ");";
 
         return this.createTable(url, sql);
     }
@@ -28,19 +31,26 @@ public class RequestedItemDb extends AbstractDataBase
                 + "(Id, ShopId, CustomerRequestId, CustomerId, ItemId, Amount) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
 
-        List<DataBaseData> data = this.getDataFromRequestedItem(requestedItem);
-        return this.insertData(url, sql, data);
+        List<DbData> data = this.getDataFromRequestedItem(requestedItem);
+        String result = this.insertData(url, sql, data);
+        if (result == null) 
+        {
+            String idE = new IdDb().insertId(requestedItem.getId());
+            if (idE != null) return idE;
+        }
+
+        return result;
     }
 
     //===========================================Query============================================
     public RequestedItem queryRequestedItemData(String id)
     {
         String sql = "SELECT * FROM RequestedItems WHERE Id = ?";
-        DataBaseData queryData = new DataBaseData(id);
+        DbData queryData = new DbData(id);
         List<String> rowNames = this.getRequestedItemRowNames();
-        List<DataBaseType> rowTypes = this.getRequestedItemRowTypes();
+        List<DbType> rowTypes = this.getRequestedItemRowTypes();
 
-        List<List<DataBaseData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
 
         return this.getRequestedItem(datas.get(0));
@@ -49,11 +59,11 @@ public class RequestedItemDb extends AbstractDataBase
     public List<RequestedItem> queryRequestedItemsByShopId(String shopId)
     {
         String sql = "SELECT * FROM RequestedItems WHERE ShopId = ?";
-        DataBaseData queryData = new DataBaseData(shopId);
+        DbData queryData = new DbData(shopId);
         List<String> rowNames = this.getRequestedItemRowNames();
-        List<DataBaseType> rowTypes = this.getRequestedItemRowTypes();
+        List<DbType> rowTypes = this.getRequestedItemRowTypes();
 
-        List<List<DataBaseData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
 
         List<RequestedItem> requestedItems = new ArrayList<>();
@@ -68,11 +78,11 @@ public class RequestedItemDb extends AbstractDataBase
     public List<RequestedItem> queryRequestedItemsByCustomerRequestId(String customerRequestId)
     {
         String sql = "SELECT * FROM RequestedItems WHERE CustomerRequestId = ?";
-        DataBaseData queryData = new DataBaseData(customerRequestId);
+        DbData queryData = new DbData(customerRequestId);
         List<String> rowNames = this.getRequestedItemRowNames();
-        List<DataBaseType> rowTypes = this.getRequestedItemRowTypes();
+        List<DbType> rowTypes = this.getRequestedItemRowTypes();
 
-        List<List<DataBaseData>> datas;
+        List<List<DbData>> datas;
         datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
 
@@ -88,11 +98,11 @@ public class RequestedItemDb extends AbstractDataBase
     public List<RequestedItem> queryRequestedItemsByItemId(String itemId)
     {
         String sql = "SELECT * FROM RequestedItems WHERE ItemId = ?";
-        DataBaseData queryData = new DataBaseData(itemId);
+        DbData queryData = new DbData(itemId);
         List<String> rowNames = this.getRequestedItemRowNames();
-        List<DataBaseType> rowTypes = this.getRequestedItemRowTypes();
+        List<DbType> rowTypes = this.getRequestedItemRowTypes();
 
-        List<List<DataBaseData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
 
         List<RequestedItem> requestedItems = new ArrayList<>();
@@ -107,11 +117,11 @@ public class RequestedItemDb extends AbstractDataBase
     public List<RequestedItem> queryRequestedItemsByCustomerId(String customerId)
     {
         String sql = "SELECT * FROM RequestedItems WHERE CustomerId = ?";
-        DataBaseData queryData = new DataBaseData(customerId);
+        DbData queryData = new DbData(customerId);
         List<String> rowNames = this.getRequestedItemRowNames();
-        List<DataBaseType> rowTypes = this.getRequestedItemRowTypes();
+        List<DbType> rowTypes = this.getRequestedItemRowTypes();
 
-        List<List<DataBaseData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
 
         List<RequestedItem> requestedItems = new ArrayList<>();
@@ -128,19 +138,25 @@ public class RequestedItemDb extends AbstractDataBase
     {
         String sql = "UPDATE RequestedItems SET * WHERE Id = ?";
 
-        List<DataBaseData> data = this.getDataFromRequestedItem(requestedItem);
-        DataBaseData id = data.get(0);
+        List<DbData> data = this.getDataFromRequestedItem(requestedItem);
+        DbData id = data.get(0);
         data.remove(0);
 
         return this.updateData(url, sql, id, data);
     }
 
     //===========================================Delete===========================================
-    public boolean deleteRequestedItemData(String id)
+    public boolean deleteRequestedItemData(RequestedItem requestedItem)
     {
         String sql = "DELETE FROM RequestedItems WHERE Id = ?";
-        DataBaseData idData = new DataBaseData(id);
-        return this.deleteRow(url, sql, idData);
+        DbData idData = new DbData(requestedItem.getId());
+        boolean result = this.deleteRow(url, sql, idData);
+        if (result)
+        {
+            new IdDb().deleteId(requestedItem.getId());
+        }
+
+        return result;
     }
 
     //===========================================Other============================================
@@ -157,20 +173,20 @@ public class RequestedItemDb extends AbstractDataBase
         
         return rowNames;
     }
-    private List<DataBaseType> getRequestedItemRowTypes()
+    private List<DbType> getRequestedItemRowTypes()
     {
-        List<DataBaseType> rowTypes = new ArrayList<>();
-        rowTypes.add(DataBaseType.TEXT);     // Id
-        rowTypes.add(DataBaseType.TEXT);     // ShopId
-        rowTypes.add(DataBaseType.TEXT);     // CustomerRequestId
-        rowTypes.add(DataBaseType.TEXT);     // CustomerId
-        rowTypes.add(DataBaseType.TEXT);     // ItemId
-        rowTypes.add(DataBaseType.INTEGER);  // Amount
+        List<DbType> rowTypes = new ArrayList<>();
+        rowTypes.add(DbType.TEXT);     // Id
+        rowTypes.add(DbType.TEXT);     // ShopId
+        rowTypes.add(DbType.TEXT);     // CustomerRequestId
+        rowTypes.add(DbType.TEXT);     // CustomerId
+        rowTypes.add(DbType.TEXT);     // ItemId
+        rowTypes.add(DbType.INTEGER);  // Amount
         
         return rowTypes;
     }
 
-    private RequestedItem getRequestedItem(List<DataBaseData> data)
+    private RequestedItem getRequestedItem(List<DbData> data)
     {
         String id = data.get(0).getValueStr();
         String shopId = data.get(1).getValueStr();
@@ -187,16 +203,16 @@ public class RequestedItemDb extends AbstractDataBase
     }
 
     // Update - Insert
-    private List<DataBaseData> getDataFromRequestedItem(RequestedItem requestedItem)
+    private List<DbData> getDataFromRequestedItem(RequestedItem requestedItem)
     {
-        DataBaseData id = new DataBaseData(requestedItem.getId());
-        DataBaseData shopId = new DataBaseData(requestedItem.getShop().getId());
-        DataBaseData customerRequestId = new DataBaseData(requestedItem.getCustomerRequest().getId());
-        DataBaseData customerId = new DataBaseData(requestedItem.getCustomer().getId());
-        DataBaseData itemId = new DataBaseData(requestedItem.getItem().getId());
-        DataBaseData amount = new DataBaseData(requestedItem.getAmount());
+        DbData id = new DbData(requestedItem.getId());
+        DbData shopId = new DbData(requestedItem.getShop().getId());
+        DbData customerRequestId = new DbData(requestedItem.getCustomerRequest().getId());
+        DbData customerId = new DbData(requestedItem.getCustomer().getId());
+        DbData itemId = new DbData(requestedItem.getItem().getId());
+        DbData amount = new DbData(requestedItem.getAmount());
 
-        List<DataBaseData> data = new ArrayList<>();
+        List<DbData> data = new ArrayList<>();
         data.add(id);
         data.add(shopId);
         data.add(customerRequestId);
