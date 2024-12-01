@@ -44,33 +44,54 @@ public class RequestedItemDb extends AbstractDb
     //===========================================Query============================================
     public RequestedItem queryRequestedItemData(String id)
     {
-        String sql = """
-            SELECT * FROM RequestedItems this WHERE Id = ?
-            LEFT JOIN Shops ON this.ShopId = Shops.Id
-            LEFT JOIN CustomerRequests ON this.CustomerRequestId = CustomerRequests.Id
-            LEFT JOIN Customers ON this.CustomerId = Customers.Id
-            LEFT JOIN Items ON this.ItemId = Items.Id        
-        """;
-
+        // Private Info
         DbData queryData = new DbData(id);
-        List<String> rowNames = this.getRowNames();
-        List<DbType> rowTypes = this.getRowTypes();
-
-        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        String queryValue = "Id";
+        List<List<DbData>> datas = this.queryRequestedItemRawDatas(queryData, queryValue);
         if (datas.isEmpty()) return null;
-        return this.getRequestedItemData(datas);
+        RequestedItem requestedItem = this.getRequestedItemPriData(datas.get(0), 0);
+
+        // Shop
+        String shopId = datas.get(0).get(1).getValueStr();
+        Shop shop = new ShopDb().queryShopPriData(shopId);
+
+        // CustomerRequest
+        String customerRequestId = datas.get(0).get(2).getValueStr();
+        CustomerRequest customerRequest = new CustomerRequestDb().queryCustomerRequestPriData(customerRequestId);
+
+        // Customer
+        String customerId = datas.get(0).get(3).getValueStr();
+        Customer customer = new CustomerDb().queryCustomerPriData(customerId);
+
+        // Item
+        String itemId = datas.get(0).get(4).getValueStr();
+        Item item = new ItemDb().queryItemPriData(itemId);
+
+        requestedItem.setShop(shop);
+        requestedItem.setCustomerRequest(customerRequest);
+        requestedItem.setCustomer(customer);
+        requestedItem.setItem(item);
+        return requestedItem;
     }
 
+    // Private Info
     public RequestedItem queryRequestedItemPriData(String id)
     {
-        String sql = "SELECT * FROM RequestedItems this WHERE Id = ?";
         DbData queryData = new DbData(id);
+        String queryValue = "Id";
+        List<List<DbData>> datas = this.queryRequestedItemRawDatas(queryData, queryValue);
+        
+        return this.getRequestedItemPriData(datas.get(0), 0);
+    }
+
+    // Other
+    public List<List<DbData>> queryRequestedItemRawDatas(DbData queryData, String queryValue)
+    {
+        String sql = "SELECT * FROM RequestedItems this WHERE + " + queryValue + " = ?";
         List<String> rowNames = this.getRequestedItemRowNames();
         List<DbType> rowTypes = this.getRequestedItemRowTypes();
 
-        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
-        if (datas.isEmpty()) return null;
-        return this.getRequestedItemPriData(datas.get(0), 0);
+        return this.queryDatas(url, sql, queryData, rowNames, rowTypes);
     }
 
     //===========================================Update===========================================
@@ -101,7 +122,6 @@ public class RequestedItemDb extends AbstractDb
 
     //===========================================Other============================================
     // ===Query===
-    // RequestedItem Pri
     public List<String> getRequestedItemRowNames()
     {
         List<String> rowNames = new ArrayList<>();
@@ -136,78 +156,6 @@ public class RequestedItemDb extends AbstractDb
         int amount = data.get(begin + 5).getValueInt(); 
 
         return new RequestedItem(id, amount);
-    }
-
-    // RequestedItem
-    private List<String> getRowNames()
-    {
-        List<String> rowNames = this.getRequestedItemRowNames();
-        for (String name : new ShopDb().getShopRowNames()) rowNames.add(name);
-        for (String name : new CustomerRequestDb().getCustomerRequestRowNames()) rowNames.add(name);
-        for (String name : new CustomerDb().getCustomerRowNames()) rowNames.add(name);
-        for (String name : new ItemDb().getItemRowNames()) rowNames.add(name);
-        
-        return rowNames;
-    }
-
-    private List<DbType> getRowTypes()
-    {
-        List<DbType> rowTypes = this.getRequestedItemRowTypes();
-        for (DbType type : new ShopDb().getShopRowTypes()) rowTypes.add(type);
-        for (DbType type : new CustomerRequestDb().getCustomerRequestRowTypes()) rowTypes.add(type);
-        for (DbType type : new CustomerDb().getCustomerRowTypes()) rowTypes.add(type);
-        for (DbType type : new ItemDb().getItemsRowTypes()) rowTypes.add(type);
-        
-        return rowTypes;
-    }
-
-    private RequestedItem getRequestedItemData(List<List<DbData>> datas)
-    {
-        List<DbData> requestedItemData = datas.get(0);
-        RequestedItem requestedItem = this.getRequestedItemPriData(requestedItemData, 0);
-        if (requestedItem.getId() == null) return null;
-
-        Shop shop = null;
-        for (List<DbData> shopData : datas)
-        {
-            Shop newShop = new ShopDb().getShopPriData(shopData, 6);
-            if (newShop.getId() == null) continue;
-            shop = newShop;
-            break;
-        }
-
-        CustomerRequest customerRequest = null;
-        for (List<DbData> customerRequestData : datas)
-        {
-            CustomerRequest newCustomerRequest = new CustomerRequestDb().getCustomerRequestPriData(customerRequestData, 12);
-            if (newCustomerRequest.getId() == null) continue;
-            customerRequest = newCustomerRequest;
-            break;
-        }
-
-        Customer customer = null;
-        for (List<DbData> customerData : datas)
-        {
-            Customer newCustomer = new CustomerDb().getCustomerPriData(customerData, 18);
-            if (newCustomer.getId() == null) continue;
-            customer = newCustomer;
-            break;
-        }
-
-        Item item = null;
-        for (List<DbData> itemData : datas)
-        {
-            Item newItem = new ItemDb().getItemPriData(itemData, 24);
-            if (newItem.getId() == null) continue;
-            item = newItem;
-            break;
-        }
-
-        requestedItem.setShop(shop);
-        requestedItem.setCustomerRequest(customerRequest);
-        requestedItem.setCustomer(customer);
-        requestedItem.setItem(item);
-        return requestedItem;
     }
 
     // ===Update - Insert===

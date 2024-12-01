@@ -45,31 +45,50 @@ public class ItemDb extends AbstractDb
     //===========================================Query============================================
     public Item queryItemData(String id)
     {
-        String sql = """
-            SELECT * FROM Items this WHERE Id = ?
-            LEFT JOIN Shops ON this.ShopId = Shops.Id
-            LEFT JOIN RequestedItems ON this.Id = RequestedItems.ItemId    
-        """;
-
+        // Private Info
         DbData queryData = new DbData(id);
-        List<String> rowNames = this.getRowNames();
-        List<DbType> rowTypes = this.getRowTypes();
-
-        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        String queryValue = "Id";
+        List<List<DbData>> datas = this.queryItemRawDatas(queryData, queryValue);
         if (datas.isEmpty()) return null;
-        return this.getItemData(datas);
+        Item item = this.getItemPriData(datas.get(0), 0);
+
+        // Shop
+        String shopId = datas.get(0).get(2).getValueStr();
+        Shop shop = new ShopDb().queryShopPriData(shopId);
+
+        // RequestedItems
+        queryValue = "ItemId";
+        datas = new RequestedItemDb().queryRequestedItemRawDatas(queryData, queryValue);
+        List<RequestedItem> requestedItems = new ArrayList<>();
+        for (List<DbData> requestedItemData : datas)
+        {
+            RequestedItem requestedItem = new RequestedItemDb().getRequestedItemPriData(requestedItemData, 0);
+            requestedItems.add(requestedItem);
+        }
+
+        item.setShop(shop);
+        item.setRequestedItems(requestedItems);
+        return item;
     }
 
+    // Private Info
     public Item queryItemPriData(String id)
     {
-        String sql = "SELECT * FROM Items this WHERE Id = ?";
         DbData queryData = new DbData(id);
-        List<String> rowNames = this.getItemRowNames();
-        List<DbType> rowTypes = this.getItemsRowTypes();
+        String queryValue = "Id";
+        List<List<DbData>> datas = this.queryItemRawDatas(queryData, queryValue);
 
-        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
-        if (datas.isEmpty()) return null;
         return this.getItemPriData(datas.get(0), 0);
+    }
+
+    // Other
+    public List<List<DbData>> queryItemRawDatas(DbData queryData, String queryValue)
+    {
+        String sql = "SELECT * FROM Items this WHERE " + queryValue + " = ?";
+        List<String> rowNames = this.getItemRowNames();
+        List<DbType> rowTypes = this.getItemRowTypes();
+        
+        return this.queryDatas(url, sql, queryData, rowNames, rowTypes);
     }
 
     //===========================================Update===========================================
@@ -101,7 +120,6 @@ public class ItemDb extends AbstractDb
 
     //===========================================Other============================================
     // ===Query===
-    // Public
     public List<String> getItemRowNames()
     {
         List<String> rowNames;
@@ -117,7 +135,7 @@ public class ItemDb extends AbstractDb
         return rowNames;
     }
     
-    public List<DbType> getItemsRowTypes()
+    public List<DbType> getItemRowTypes()
     {
         List<DbType> rowTypes = new ArrayList<>();
         rowTypes.add(DbType.TEXT);    // Id
@@ -142,53 +160,6 @@ public class ItemDb extends AbstractDb
         String description = data.get(begin + 6).getValueStr();
 
         return new Item(id, name, price, ItemType.values()[itemTypeInt], initAmount, description);
-    }
-
-    // Private
-    private List<String> getRowNames()
-    {
-        List<String> rowNames = this.getItemRowNames();
-        for (String name : new ShopDb().getShopRowNames()) rowNames.add(name);
-        for (String name : new RequestedItemDb().getRequestedItemRowNames()) rowNames.add(name);
-
-        return rowNames;
-    }
-
-    private List<DbType> getRowTypes()
-    {
-        List<DbType> rowTypes = this.getItemsRowTypes();
-        for (DbType type : new ShopDb().getShopRowTypes()) rowTypes.add(type);
-        for (DbType type : new RequestedItemDb().getRequestedItemRowTypes()) rowTypes.add(type);
-    
-        return rowTypes;
-    }
-
-    private Item getItemData(List<List<DbData>> datas)
-    {
-        List<DbData> itemData = datas.get(0);
-        Item item = this.getItemPriData(itemData, 0);
-        if (item.getId() == null) return null;
-
-        Shop shop = null;
-        for (List<DbData> shopData : datas)
-        {
-            Shop newShop = new ShopDb().getShopPriData(shopData, 7);
-            if (newShop.getId() == null) continue;
-            shop = newShop;
-            break;
-        }
-
-        List<RequestedItem> requestedItems = new ArrayList<>();
-        for (List<DbData> requestedItemData : datas)
-        {
-            RequestedItem newRequestedItem = new RequestedItemDb().getRequestedItemPriData(requestedItemData, 13);
-            if (newRequestedItem.getId() == null) continue;
-            requestedItems.add(newRequestedItem);
-        }
-
-        item.setShop(shop);
-        item.setRequestedItems(requestedItems);
-        return item;
     }
 
     // ===Update - Insert===

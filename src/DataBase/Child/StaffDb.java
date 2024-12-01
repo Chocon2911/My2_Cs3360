@@ -51,33 +51,50 @@ public class StaffDb extends AbstractDb
     //===========================================Query============================================
     public Staff queryStaffData(String id)
     {
-        String sql = """
-            SELECT * 
-            FROM Staffs this
-            WHERE Id = ?
-            LEFT JOIN Shops ON this.ShopId = Shops.Id
-            LEFT JOIN CustomerRequests ON this.Id = CustomerRequests.StaffId         
-        """;
-
+        // Private Info
         DbData queryData = new DbData(id);
-        List<String> rowNames = this.getRowNames();
-        List<DbType> rowTypes = this.getRowTypes();
-
-        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        String queryValue = "Id";
+        List<List<DbData>> datas = this.queryStaffRawDatas(queryData, queryValue);
         if (datas.isEmpty()) return null;
-        return this.getStaffData(datas);
+        Staff staff = this.getStaffPriData(datas.get(0), 0);
+        
+        // Shop
+        String shopId = datas.get(0).get(4).getValueStr();
+        Shop shop = new ShopDb().queryShopPriData(shopId);
+
+        // List<CustomerRequest>
+        queryValue = "StaffId";
+        datas = new CustomerRequestDb().queryCustomerRequestRawDatas(queryData, queryValue);
+        List<CustomerRequest> customerRequests = new ArrayList<>();
+        for (List<DbData> customerRequestData : datas)
+        {
+            CustomerRequest customerRequest = new CustomerRequestDb().getCustomerRequestPriData(customerRequestData, 0);
+            customerRequests.add(customerRequest);
+        }
+
+        staff.setShop(shop);
+        staff.setCustomerRequests(customerRequests);
+        return staff;
     }
 
+    // Private Info
     public Staff queryStaffPriData(String id)
     {
-        String sql = "SELECT * FROM Staffs this WHERE Id = ?";
         DbData queryData = new DbData(id);
+        String queryValue = "Id";
+        List<List<DbData>> datas = this.queryStaffRawDatas(queryData, queryValue);
+
+        return this.getStaffPriData(datas.get(0), 0);
+    }
+
+    // Other
+    public List<List<DbData>> queryStaffRawDatas(DbData queryData, String queryValue)
+    {
+        String sql = "SELECT * FROM Staffs this WHERE + " + queryValue + " = ?";
         List<String> rowNames = this.getStaffRowNames();
         List<DbType> rowTypes = this.getStaffRowTypes();
 
-        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
-        if (datas.isEmpty()) return null;
-        return this.getStaffPriData(datas.get(0), 0);
+        return this.queryDatas(url, sql, queryData, rowNames, rowTypes);
     }
 
     //===========================================Update===========================================
@@ -109,7 +126,6 @@ public class StaffDb extends AbstractDb
 
     //===========================================Other============================================
     // ===Query===
-    // Staff Pri
     public List<String> getStaffRowNames()
     {
         List<String> rowNames = new ArrayList<>();
@@ -143,58 +159,6 @@ public class StaffDb extends AbstractDb
         // String shopId = data.get(begin + 4).getValueStr();
 
         return new Staff(id, name, userName, password);
-    }
-
-    // Staff
-    private List<String> getRowNames()
-    {
-        List<String> rowNames = this.getStaffRowNames();
-        for (String name : new ManagerDb().getManagerRowNames()) rowNames.add(name);
-        for (String name : new StaffDb().getStaffRowNames()) rowNames.add(name);
-        for (String name : new CustomerDb().getCustomerRowNames()) rowNames.add(name);
-        for (String name : new ItemDb().getItemRowNames()) rowNames.add(name);
-        for (String name : new CustomerRequestDb().getCustomerRequestRowNames()) rowNames.add(name);
-
-        return rowNames;
-    }
-
-    private List<DbType> getRowTypes()
-    {
-        List<DbType> rowTypes = this.getStaffRowTypes();
-        for (DbType type : new ManagerDb().getManagerRowTypes()) rowTypes.add(type);
-        for (DbType type : new StaffDb().getStaffRowTypes()) rowTypes.add(type);
-        for (DbType type : new CustomerDb().getCustomerRowTypes()) rowTypes.add(type);
-        for (DbType type : new ItemDb().getItemsRowTypes()) rowTypes.add(type);
-        for (DbType type : new CustomerRequestDb().getCustomerRequestRowTypes()) rowTypes.add(type);
-
-        return rowTypes;
-    }
-
-    private Staff getStaffData(List<List<DbData>> datas)
-    {
-        List<DbData> staffData = datas.get(0);
-        Staff staff = this.getStaffPriData(staffData, 0);
-        if (staff.getId() == null) return null;
-
-        List<Shop> shops = new ArrayList<>();
-        for (List<DbData> shopData : datas)
-        {
-            Shop newShop = new ShopDb().getShopPriData(shopData, 5);
-            if (newShop.getId() == null) continue;
-            shops.add(newShop);
-        }
-
-        List<CustomerRequest> customerRequests = new ArrayList<>();
-        for (List<DbData> customerRequestData : datas)
-        {
-            CustomerRequest newCustomerRequest = new CustomerRequestDb().getCustomerRequestPriData(customerRequestData, 16);
-            if (newCustomerRequest.getId() == null) continue;
-            customerRequests.add(newCustomerRequest);
-        }
-
-        staff.setShop(shops.get(0));
-        staff.setCustomerRequests(customerRequests);
-        return staff;
     }
 
     // ===Update - Insert===

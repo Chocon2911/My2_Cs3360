@@ -61,16 +61,24 @@ public class CustomerRequestDb extends AbstractDb
         return this.getCustomerRequestData(datas);
     }
 
+    // Private Info
     public CustomerRequest queryCustomerRequestPriData(String id)
     {
-        String sql = "SELECT * FROM CustomerRequests this WHERE Id = ?";
         DbData queryData = new DbData(id);
+        String queryValue = "Id";
+        List<List<DbData>> datas = this.queryCustomerRequestRawDatas(queryData, queryValue);
+
+        return this.getCustomerRequestPriData(datas.get(0), 0);
+    }
+
+    // Other
+    public List<List<DbData>> queryCustomerRequestRawDatas(DbData queryData, String queryValue)
+    {
+        String sql = "SELECT * FROM CustomerRequests this WHERE " + queryValue + " = ?";
         List<String> rowNames = this.getRowNames();
         List<DbType> rowTypes = this.getRowTypes();
-
-        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
-        if (datas.isEmpty()) return null;
-        return this.getCustomerRequestPriData(datas.get(0), 0);
+        
+        return this.queryDatas(url, sql, queryData, rowNames, rowTypes);
     }
 
     //===========================================Update===========================================

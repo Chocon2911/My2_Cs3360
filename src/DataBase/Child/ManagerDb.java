@@ -51,30 +51,40 @@ public class ManagerDb extends AbstractDb
     //===========================================Query============================================
     public Manager queryManagerData(String id)
     {
-        String sql = """
-            SELECT * FROM Managers this WHERE Id = ?
-            LEFT JOIN Shops ON this.ShopId = Shops.Id
-        """;
-
+        // Private Info
         DbData queryData = new DbData(id);
-        List<String> rowNames = this.getRowNames();
-        List<DbType> rowTypes = this.getRowTypes();
-
-        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        String queryValue = "Id";
+        List<List<DbData>> datas = this.queryManagerRawDatas(queryData, queryValue);
         if (datas.isEmpty()) return null;
-        return this.getManagerData(datas);
+        Manager manager = this.getManagerPriData(datas.get(0), 0);
+
+        // Shop
+        String shopId = datas.get(0).get(4).getValueStr();
+        Shop shop = new ShopDb().queryShopPriData(shopId);
+        manager.setShop(shop);
+
+        manager.setShop(shop);
+        return manager;
     }
 
+    // Private Info
     public Manager queryManagerPriData(String id)
     {
-        String sql = "SELECT * FROM Managers this WHERE Id = ?";
         DbData queryData = new DbData(id);
+        String queryValue = "Id";
+        List<List<DbData>> datas = this.queryManagerRawDatas(queryData, queryValue);
+        
+        return this.getManagerPriData(datas.get(0), 0);
+    }
+
+    // Other
+    public List<List<DbData>> queryManagerRawDatas(DbData queryData, String queryValue)
+    {
+        String sql = "SELECT * FROM Managers this WHERE " + queryValue + " = ?";
         List<String> rowNames = this.getManagerRowNames();
         List<DbType> rowTypes = this.getManagerRowTypes();
 
-        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
-        if (datas.isEmpty()) return null;
-        return this.getManagerPriData(datas.get(0), 0);
+        return this.queryDatas(url, sql, queryData, rowNames, rowTypes);
     }
 
     //===========================================Update===========================================
@@ -144,42 +154,6 @@ public class ManagerDb extends AbstractDb
         // String shopId = data.get(begin + 4).getValueStr();
 
         return new Manager(id, name, userName, password);
-    }
-
-    // Manager
-    private List<String> getRowNames()
-    {
-        List<String> rowNames = this.getManagerRowNames();
-        for (String name : new ShopDb().getShopRowNames()) rowNames.add(name);
-        
-        return rowNames;
-    }
-
-    private List<DbType> getRowTypes()
-    {
-        List<DbType> rowTypes = this.getManagerRowTypes();
-        for (DbType type : new ShopDb().getShopRowTypes()) rowTypes.add(type);
-        
-        return rowTypes;
-    }
-
-    private Manager getManagerData(List<List<DbData>> data)
-    {
-        List<DbData> managerData = data.get(0);
-        Manager manager = this.getManagerPriData(managerData, 0);
-        if (manager.getId() == null) return null;
-
-        Shop shop = null;
-        for (List<DbData> shopData : data)
-        {
-            Shop newShop = new ShopDb().getShopPriData(shopData, 5);
-            if (newShop.getId() == null) continue;
-            shop = newShop;
-            break;
-        }
-
-        manager.setShop(shop);
-        return manager;
     }
 
     // Update - Insert

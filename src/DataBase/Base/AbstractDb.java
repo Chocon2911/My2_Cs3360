@@ -103,7 +103,7 @@ public abstract class AbstractDb extends ObjUtil
         }
         catch (Exception e)
         {
-            System.out.println(e.getMessage());
+            System.out.println("getConnection() ERROR: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -184,7 +184,7 @@ public abstract class AbstractDb extends ObjUtil
         }
         catch (Exception e) 
         {
-            System.out.println(e.getMessage());
+            System.out.println("QueryDatas() ERROR: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }
