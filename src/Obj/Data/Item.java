@@ -25,6 +25,16 @@ public class Item extends AbstractMainObj
 		this.requestedItems = null;
 	}
 
+	public Item(String id, String name, float price, ItemType itemType, 
+	int initAmount, String description)
+	{
+		super(id, name);
+		this.price = price;
+		this.itemType = itemType;
+		this.initAmount = initAmount;
+		this.description = description;
+	}
+
 	public Item(String id, String name, Shop shop, float price, ItemType itemType, 
     int initAmount, String description, List<RequestedItem> requestedItems)
  	{

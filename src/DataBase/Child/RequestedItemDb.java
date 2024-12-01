@@ -2,7 +2,6 @@ package DataBase.Child;
 
 import DataBase.Base.*;
 import Obj.Data.*;
-
 import java.util.*;
 
 public class RequestedItemDb extends AbstractDb
@@ -45,92 +44,33 @@ public class RequestedItemDb extends AbstractDb
     //===========================================Query============================================
     public RequestedItem queryRequestedItemData(String id)
     {
-        String sql = "SELECT * FROM RequestedItems WHERE Id = ?";
+        String sql = """
+            SELECT * FROM RequestedItems this WHERE Id = ?
+            LEFT JOIN Shops ON this.ShopId = Shops.Id
+            LEFT JOIN CustomerRequests ON this.CustomerRequestId = CustomerRequests.Id
+            LEFT JOIN Customers ON this.CustomerId = Customers.Id
+            LEFT JOIN Items ON this.ItemId = Items.Id        
+        """;
+
+        DbData queryData = new DbData(id);
+        List<String> rowNames = this.getRowNames();
+        List<DbType> rowTypes = this.getRowTypes();
+
+        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        if (datas.isEmpty()) return null;
+        return this.getRequestedItemData(datas);
+    }
+
+    public RequestedItem queryRequestedItemPriData(String id)
+    {
+        String sql = "SELECT * FROM RequestedItems this WHERE Id = ?";
         DbData queryData = new DbData(id);
         List<String> rowNames = this.getRequestedItemRowNames();
         List<DbType> rowTypes = this.getRequestedItemRowTypes();
 
         List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
-
-        return this.getRequestedItem(datas.get(0));
-    }
-
-    public List<RequestedItem> queryRequestedItemsByShopId(String shopId)
-    {
-        String sql = "SELECT * FROM RequestedItems WHERE ShopId = ?";
-        DbData queryData = new DbData(shopId);
-        List<String> rowNames = this.getRequestedItemRowNames();
-        List<DbType> rowTypes = this.getRequestedItemRowTypes();
-
-        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
-        if (datas.isEmpty()) return null;
-
-        List<RequestedItem> requestedItems = new ArrayList<>();
-        for (int i = 0; i < datas.size(); i++)
-        {
-            requestedItems.add(this.getRequestedItem(datas.get(i)));
-        }
-
-        return requestedItems;
-    }
-
-    public List<RequestedItem> queryRequestedItemsByCustomerRequestId(String customerRequestId)
-    {
-        String sql = "SELECT * FROM RequestedItems WHERE CustomerRequestId = ?";
-        DbData queryData = new DbData(customerRequestId);
-        List<String> rowNames = this.getRequestedItemRowNames();
-        List<DbType> rowTypes = this.getRequestedItemRowTypes();
-
-        List<List<DbData>> datas;
-        datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
-        if (datas.isEmpty()) return null;
-
-        List<RequestedItem> requestedItems = new ArrayList<>();
-        for (int i = 0; i < datas.size(); i++)
-        {
-            requestedItems.add(this.getRequestedItem(datas.get(i)));
-        }
-
-        return requestedItems;
-    }
-
-    public List<RequestedItem> queryRequestedItemsByItemId(String itemId)
-    {
-        String sql = "SELECT * FROM RequestedItems WHERE ItemId = ?";
-        DbData queryData = new DbData(itemId);
-        List<String> rowNames = this.getRequestedItemRowNames();
-        List<DbType> rowTypes = this.getRequestedItemRowTypes();
-
-        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
-        if (datas.isEmpty()) return null;
-
-        List<RequestedItem> requestedItems = new ArrayList<>();
-        for (int i = 0; i < datas.size(); i++)
-        {
-            requestedItems.add(this.getRequestedItem(datas.get(i)));
-        }
-
-        return requestedItems;
-    }
-
-    public List<RequestedItem> queryRequestedItemsByCustomerId(String customerId)
-    {
-        String sql = "SELECT * FROM RequestedItems WHERE CustomerId = ?";
-        DbData queryData = new DbData(customerId);
-        List<String> rowNames = this.getRequestedItemRowNames();
-        List<DbType> rowTypes = this.getRequestedItemRowTypes();
-
-        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
-        if (datas.isEmpty()) return null;
-
-        List<RequestedItem> requestedItems = new ArrayList<>();
-        for (int i = 0; i < datas.size(); i++)
-        {
-            requestedItems.add(this.getRequestedItem(datas.get(i)));
-        }
-
-        return requestedItems;
+        return this.getRequestedItemPriData(datas.get(0), 0);
     }
 
     //===========================================Update===========================================
@@ -160,8 +100,9 @@ public class RequestedItemDb extends AbstractDb
     }
 
     //===========================================Other============================================
-    // Query
-    private List<String> getRequestedItemRowNames()
+    // ===Query===
+    // RequestedItem Pri
+    public List<String> getRequestedItemRowNames()
     {
         List<String> rowNames = new ArrayList<>();
         rowNames.add("Id");
@@ -173,7 +114,7 @@ public class RequestedItemDb extends AbstractDb
         
         return rowNames;
     }
-    private List<DbType> getRequestedItemRowTypes()
+    public List<DbType> getRequestedItemRowTypes()
     {
         List<DbType> rowTypes = new ArrayList<>();
         rowTypes.add(DbType.TEXT);     // Id
@@ -185,24 +126,91 @@ public class RequestedItemDb extends AbstractDb
         
         return rowTypes;
     }
-
-    private RequestedItem getRequestedItem(List<DbData> data)
+    public RequestedItem getRequestedItemPriData(List<DbData> data, int begin)
     {
-        String id = data.get(0).getValueStr();
-        String shopId = data.get(1).getValueStr();
-        String customerRequestId = data.get(2).getValueStr();
-        String customerId = data.get(3).getValueStr();
-        String itemId = data.get(4).getValueStr();
-        int amount = data.get(5).getValueInt();
-        
-        Shop shop = new ShopDb().queryShopData(shopId);
-        CustomerRequest customerRequest = new CustomerRequestDb().queryCustomerRequestData(customerRequestId);
-        Customer customer = new CustomerDb().queryCustomerData(customerId);
-        Item item = new ItemDb().queryItemData(itemId);
-        return new RequestedItem(id, shop, customerRequest, customer, item, amount);
+        String id = data.get(begin).getValueStr();
+        // String shopId = data.get(begin + 1).getValueStr();
+        // String customerRequestId = data.get(begin + 2).getValueStr();
+        // String customerId = data.get(begin + 3).getValueStr();
+        // String itemId = data.get(begin + 4).getValueStr();
+        int amount = data.get(begin + 5).getValueInt(); 
+
+        return new RequestedItem(id, amount);
     }
 
-    // Update - Insert
+    // RequestedItem
+    private List<String> getRowNames()
+    {
+        List<String> rowNames = this.getRequestedItemRowNames();
+        for (String name : new ShopDb().getShopRowNames()) rowNames.add(name);
+        for (String name : new CustomerRequestDb().getCustomerRequestRowNames()) rowNames.add(name);
+        for (String name : new CustomerDb().getCustomerRowNames()) rowNames.add(name);
+        for (String name : new ItemDb().getItemRowNames()) rowNames.add(name);
+        
+        return rowNames;
+    }
+
+    private List<DbType> getRowTypes()
+    {
+        List<DbType> rowTypes = this.getRequestedItemRowTypes();
+        for (DbType type : new ShopDb().getShopRowTypes()) rowTypes.add(type);
+        for (DbType type : new CustomerRequestDb().getCustomerRequestRowTypes()) rowTypes.add(type);
+        for (DbType type : new CustomerDb().getCustomerRowTypes()) rowTypes.add(type);
+        for (DbType type : new ItemDb().getItemsRowTypes()) rowTypes.add(type);
+        
+        return rowTypes;
+    }
+
+    private RequestedItem getRequestedItemData(List<List<DbData>> datas)
+    {
+        List<DbData> requestedItemData = datas.get(0);
+        RequestedItem requestedItem = this.getRequestedItemPriData(requestedItemData, 0);
+        if (requestedItem.getId() == null) return null;
+
+        Shop shop = null;
+        for (List<DbData> shopData : datas)
+        {
+            Shop newShop = new ShopDb().getShopPriData(shopData, 6);
+            if (newShop.getId() == null) continue;
+            shop = newShop;
+            break;
+        }
+
+        CustomerRequest customerRequest = null;
+        for (List<DbData> customerRequestData : datas)
+        {
+            CustomerRequest newCustomerRequest = new CustomerRequestDb().getCustomerRequestPriData(customerRequestData, 12);
+            if (newCustomerRequest.getId() == null) continue;
+            customerRequest = newCustomerRequest;
+            break;
+        }
+
+        Customer customer = null;
+        for (List<DbData> customerData : datas)
+        {
+            Customer newCustomer = new CustomerDb().getCustomerPriData(customerData, 18);
+            if (newCustomer.getId() == null) continue;
+            customer = newCustomer;
+            break;
+        }
+
+        Item item = null;
+        for (List<DbData> itemData : datas)
+        {
+            Item newItem = new ItemDb().getItemPriData(itemData, 24);
+            if (newItem.getId() == null) continue;
+            item = newItem;
+            break;
+        }
+
+        requestedItem.setShop(shop);
+        requestedItem.setCustomerRequest(customerRequest);
+        requestedItem.setCustomer(customer);
+        requestedItem.setItem(item);
+        return requestedItem;
+    }
+
+    // ===Update - Insert===
     private List<DbData> getDataFromRequestedItem(RequestedItem requestedItem)
     {
         DbData id = new DbData(requestedItem.getId());

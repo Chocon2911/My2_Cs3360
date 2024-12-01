@@ -5,7 +5,6 @@ import DataBase.Base.DbData;
 import DataBase.Base.DbType;
 import Obj.Data.Manager;
 import Obj.Data.Shop;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,35 +51,30 @@ public class ManagerDb extends AbstractDb
     //===========================================Query============================================
     public Manager queryManagerData(String id)
     {
+        String sql = """
+            SELECT * FROM Managers this WHERE Id = ?
+            LEFT JOIN Shops ON this.ShopId = Shops.Id
+        """;
+
         DbData queryData = new DbData(id);
-        String sql = "SELECT * FROM Managers WHERE Id = ?";
-        List<String> rowNames = this.getManagerRowNames();
-        List<DbType> rowTypes = this.getManagerRowTypes();
+        List<String> rowNames = this.getRowNames();
+        List<DbType> rowTypes = this.getRowTypes();
 
         List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
-
-        return this.getManager(datas.get(0));
+        return this.getManagerData(datas);
     }
 
-    public List<Manager> queryManagersByShopId(String shopId)
+    public Manager queryManagerPriData(String id)
     {
-        String sql = "SELECT * FROM Managers WHERE ShopId = ?";
-        DbData queryData = new DbData(shopId);
+        String sql = "SELECT * FROM Managers this WHERE Id = ?";
+        DbData queryData = new DbData(id);
         List<String> rowNames = this.getManagerRowNames();
         List<DbType> rowTypes = this.getManagerRowTypes();
 
         List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
-
-        List<Manager> managers = new ArrayList<>();
-        for (int i = 0; i < datas.size(); i++)
-        {
-            Manager manager = this.getManager(datas.get(i));
-            managers.add(manager);
-        }
-        
-        return managers;
+        return this.getManagerPriData(datas.get(0), 0);
     }
 
     //===========================================Update===========================================
@@ -114,8 +108,9 @@ public class ManagerDb extends AbstractDb
     }
 
     //===========================================Other============================================
-    // Query
-    private List<String> getManagerRowNames()
+    // ===Query===
+    // Manager Pri
+    public List<String> getManagerRowNames()
     {
         List<String> rowNames;
         rowNames = new ArrayList<>();
@@ -128,7 +123,7 @@ public class ManagerDb extends AbstractDb
         return rowNames;
     }
 
-    private List<DbType> getManagerRowTypes()
+    public List<DbType> getManagerRowTypes()
     {
         List<DbType> rowTypes = new ArrayList<>();
         rowTypes.add(DbType.TEXT);    // Id
@@ -140,16 +135,51 @@ public class ManagerDb extends AbstractDb
         return rowTypes;
     }
 
-    private Manager getManager(List<DbData> data)
+    public Manager getManagerPriData(List<DbData> data, int begin)
     {
-        String id = data.get(0).getValueStr();
-        String name = data.get(1).getValueStr();
-        String userName = data.get(2).getValueStr();
-        String password = data.get(3).getValueStr();
-        String shopId = data.get(4).getValueStr();
+        String id = data.get(begin).getValueStr();
+        String name = data.get(begin + 1).getValueStr();
+        String userName = data.get(begin + 2).getValueStr();
+        String password = data.get(begin + 3).getValueStr();
+        // String shopId = data.get(begin + 4).getValueStr();
 
-        Shop shop = new ShopDb().queryShopData(shopId);
-        return new Manager(id, name, userName, password, shop);
+        return new Manager(id, name, userName, password);
+    }
+
+    // Manager
+    private List<String> getRowNames()
+    {
+        List<String> rowNames = this.getManagerRowNames();
+        for (String name : new ShopDb().getShopRowNames()) rowNames.add(name);
+        
+        return rowNames;
+    }
+
+    private List<DbType> getRowTypes()
+    {
+        List<DbType> rowTypes = this.getManagerRowTypes();
+        for (DbType type : new ShopDb().getShopRowTypes()) rowTypes.add(type);
+        
+        return rowTypes;
+    }
+
+    private Manager getManagerData(List<List<DbData>> data)
+    {
+        List<DbData> managerData = data.get(0);
+        Manager manager = this.getManagerPriData(managerData, 0);
+        if (manager.getId() == null) return null;
+
+        Shop shop = null;
+        for (List<DbData> shopData : data)
+        {
+            Shop newShop = new ShopDb().getShopPriData(shopData, 5);
+            if (newShop.getId() == null) continue;
+            shop = newShop;
+            break;
+        }
+
+        manager.setShop(shop);
+        return manager;
     }
 
     // Update - Insert

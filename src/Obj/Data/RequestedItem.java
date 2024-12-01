@@ -22,6 +22,12 @@ public class RequestedItem extends AbstractObj
 		this.amount = -1;
 	}
 
+	public RequestedItem(String id, int amount)
+	{
+		super(id);
+		this.amount = amount;
+	}
+
 	public RequestedItem(String id, Shop shop, CustomerRequest customerRequest, Customer customer, Item item, int amount)
 	{
         super(id);

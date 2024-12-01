@@ -23,6 +23,12 @@ public class CustomerRequest extends AbstractMainObj
 		this.isSold = false;
 	}
 
+	public CustomerRequest(String id, String name, boolean isSold)
+	{
+		super(id, name);
+		this.isSold = isSold;
+	}
+
 	public CustomerRequest(String id, String name, Shop shop, Customer requestedCustomer, 
     Staff handledStaff, List<RequestedItem> requestedItems, boolean isSold)
 	{

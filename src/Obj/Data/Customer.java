@@ -21,6 +21,12 @@ public class Customer extends AbstractAccount
 		this.unRequestedItems = null;
 	}
 
+	public Customer(String id, String name, String userName, String password, float balance)
+	{
+		super(id, name, userName, password);
+		this.balance = balance;
+	}
+
 	public Customer(String id, String name, String userName, String password, 
 	float balance, Shop shop, List<CustomerRequest> customerRequests, 
 	List<RequestedItem> unRequestedItems)	

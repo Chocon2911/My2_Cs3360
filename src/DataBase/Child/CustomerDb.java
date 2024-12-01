@@ -1,11 +1,7 @@
 package DataBase.Child;
 
 import DataBase.Base.*;
-import Obj.Data.Customer;
-import Obj.Data.CustomerRequest;
-import Obj.Data.RequestedItem;
-import Obj.Data.Shop;
-
+import Obj.Data.*;
 import java.util.*;
 
 public class CustomerDb extends AbstractDb
@@ -52,34 +48,32 @@ public class CustomerDb extends AbstractDb
     //===========================================Query============================================
     public Customer queryCustomerData(String id)
     {
+        String sql = """
+            SELECT * FROM Customers this WHERE Id = ?
+            LEFT JOIN Shops ON this.ShopId = Shops.Id
+            LEFT JOIN CustomerRequests ON this.Id = CustomerRequests.RequestedCustomerId
+            LEFT JOIN RequestedItems ON this.Id = RequestedItems.CustomerId
+        """;
+
         DbData queryData = new DbData(id);
-        String sql = "SELECT * FROM Customers WHERE Id = ?";
-        List<String> rowNames = this.getCustomerRowNames();
-        List<DbType> rowTypes = this.getCustomerRowTypes();
+        List<String> rowNames = this.getRowNames();
+        List<DbType> rowTypes = this.getRowTypes();
 
         List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
-
-        return this.getCustomer(datas.get(0));
+        return this.getCustomerData(datas);
     }
 
-    public List<Customer> queryCustomersByShopId(String shopId)
+    public Customer QueryCustomerPriData(String id)
     {
-        String sql = "SELECT * FROM Customers WHERE ShopId = ?";
-        DbData queryData = new DbData(shopId);
-        List<String> rowNames = this.getCustomerRowNames();
-        List<DbType> rowTypes = this.getCustomerRowTypes();
-
+        String sql = "SELECT * FROM Customers WHERE Id = ?";
+        DbData queryData = new DbData(id);
+        List<String> rowNames = this.getRowNames();
+        List<DbType> rowTypes = this.getRowTypes();
+        
         List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
         if (datas.isEmpty()) return null;
-
-        List<Customer> customers = new ArrayList<>();
-        for (int i = 0; i < datas.size(); i++)
-        {
-            customers.add(this.getCustomer(datas.get(i)));
-        }
-
-        return customers;
+        return this.getCustomerPriData(datas.get(0), 0);
     }
 
     //===========================================Update===========================================
@@ -110,8 +104,9 @@ public class CustomerDb extends AbstractDb
     }
 
     //===========================================Other============================================
-    // Query
-    private List<String> getCustomerRowNames()
+    // ===Query===
+    // Customer Pri
+    public List<String> getCustomerRowNames()
     {
         List<String> rowNames;
         rowNames = new ArrayList<>();
@@ -124,7 +119,7 @@ public class CustomerDb extends AbstractDb
         return rowNames;
     }
 
-    private List<DbType> getCustomerRowTypes()
+    public List<DbType> getCustomerRowTypes()
     {
         List<DbType> rowTypes = new ArrayList<>();
         rowTypes.add(DbType.TEXT);    // Id
@@ -136,22 +131,78 @@ public class CustomerDb extends AbstractDb
         return rowTypes;
     }
 
-    private Customer getCustomer(List<DbData> data)
+    public Customer getCustomerPriData(List<DbData> data, int begin)
     {
-        String id = data.get(0).getValueStr();
-        String name = data.get(1).getValueStr();
-        String userName = data.get(2).getValueStr();
-        String password = data.get(3).getValueStr();
-        float balance = data.get(4).getValueFloat();
-        String shopId = data.get(5).getValueStr();
-
-        Shop shop = new ShopDb().queryShopData(shopId);
-        List<CustomerRequest> customerRequests = new CustomerRequestDb().queryCustomerRequestsByCustomerId(id);
-        List<RequestedItem> unRequestedItems = new RequestedItemDb().queryRequestedItemsByCustomerId(id);
-        return new Customer(id, name, userName, password, balance, shop, customerRequests, unRequestedItems);
+        String id = data.get(begin).getValueStr();
+        String name = data.get(begin + 1).getValueStr();
+        String userName = data.get(begin + 2).getValueStr();
+        String password = data.get(begin + 3).getValueStr();
+        float balance = data.get(begin + 4).getValueFloat();
+        // String shopId = data.get(begin + 5).getValueStr();
+        
+        return new Customer(id, name, userName, password, balance);
     }
 
-    // Update - Insert
+    // Customer
+    public List<String> getRowNames()
+    {
+        List<String> rowNames = this.getCustomerRowNames();
+        for (String name : new ShopDb().getShopRowNames()) rowNames.add(name);
+        for (String name : new CustomerRequestDb().getCustomerRequestRowNames()) rowNames.add(name);
+        for (String name : new RequestedItemDb().getRequestedItemRowNames()) rowNames.add(name);
+
+        return rowNames;
+    }    
+
+    public List<DbType> getRowTypes()
+    {
+        List<DbType> rowTypes = this.getCustomerRowTypes();
+        for (DbType type : new ShopDb().getShopRowTypes()) rowTypes.add(type);
+        for (DbType type : new CustomerRequestDb().getCustomerRequestRowTypes()) rowTypes.add(type);
+        for (DbType type : new RequestedItemDb().getRequestedItemRowTypes()) rowTypes.add(type);
+
+        return rowTypes;
+    }
+
+    public Customer getCustomerData(List<List<DbData>> datas)
+    {
+        List<DbData> data = datas.get(0);
+        Customer customer = this.getCustomerPriData(data, 0);
+        if (customer.getId() == null) return null;
+
+        Shop shop = null;
+        for (List<DbData> shopData : datas)
+        {
+            Shop newShop = new ShopDb().getShopPriData(shopData, 6);
+            if (newShop.getId() == null) continue;
+            shop = newShop;
+            break;
+        }
+
+        List<CustomerRequest> customerRequests = new ArrayList<>();
+        for (List<DbData> customerRequestData : datas)
+        {
+            CustomerRequest newCustomerRequest = new CustomerRequestDb().getCustomerRequestPriData(customerRequestData, 12);
+            if (newCustomerRequest.getId() == null) continue;
+            customerRequests.add(newCustomerRequest);
+        }
+
+        List<RequestedItem> requestedItems = new ArrayList<>();
+        for (List<DbData> requestedItemData : datas)
+        {
+            RequestedItem newRequestedItem = new RequestedItemDb().getRequestedItemPriData(requestedItemData, 18);
+            if (newRequestedItem.getId() == null) continue;
+            requestedItems.add(newRequestedItem);
+        }
+
+        customer.setShop(shop);
+        customer.setCustomerRequests(customerRequests);
+        customer.setUnRequestedItems(requestedItems);
+
+        return customer;
+    }
+
+    // ===Update - Insert===
     private List<DbData> getDataFromCustomer(Customer customer)
     {
         DbData id = new DbData(customer.getId());
