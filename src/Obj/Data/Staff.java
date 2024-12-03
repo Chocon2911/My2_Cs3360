@@ -17,15 +17,15 @@ public class Staff extends AbstractAccount
 		this.customerRequests = null;
 	}
 
-	public Staff(String id, String name, String userName, String password)
+	public Staff(String id, String name, String userName, String password, boolean isLogin)
 	{
-		super(id, name, userName, password);
+		super(id, name, userName, password, isLogin);
 	}
 
-	public Staff(String id, String name, String userName, String password, Shop shop
-	, List<CustomerRequest> customerRequests)
+	public Staff(String id, String name, String userName, String password, boolean isLogin,
+	Shop shop, List<CustomerRequest> customerRequests)
 	{
-        super(id, name, userName, password);
+        super(id, name, userName, password, isLogin);
 		this.shop = shop;
 		this.customerRequests = customerRequests;
 	}

@@ -1,4 +1,6 @@
-package Obj.Base;
+package Controller.Base;
+
+import Obj.Base.AbstractObj;
 
 public abstract class AbstractObjCtrl extends AbstractObj
 {

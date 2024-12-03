@@ -7,6 +7,16 @@ import java.util.List;
 
 public class IdDb extends AbstractDb
 {
+    //==========================================Variable==========================================
+    private static IdDb instance;
+
+    //=========================================Singleton==========================================
+    public static IdDb getInstance()
+    {
+        if (instance == null) instance = new IdDb();
+        return instance;
+    }
+
     //========================================CreateTable=========================================
     public boolean createIdTable()
     {
@@ -21,6 +31,8 @@ public class IdDb extends AbstractDb
         String sql = "INSERT INTO ids (GlobalId) VALUES (?)";
         List<DbData> data = new ArrayList<>();
         data.add(new DbData(id));
+
+        System.out.println("===insert Id===");
         return this.insertData(url, sql, data);
     }
 
@@ -28,7 +40,7 @@ public class IdDb extends AbstractDb
     //===========================================Delete===========================================
     public boolean deleteId(String id)
     {
-        String sql = "DELETE FROM ids WHERE UserName = ?";
+        String sql = "DELETE FROM ids WHERE GlobalId = ?";
         DbData userNameData = new DbData(id);
         return this.deleteRow(url, sql, userNameData);
     }

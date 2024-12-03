@@ -6,6 +6,16 @@ import java.util.*;
 
 public class CustomerRequestDb extends AbstractDb
 {
+    //==========================================Variable==========================================
+    private static CustomerRequestDb instance;
+
+    //=========================================Singleton==========================================
+    public static final CustomerRequestDb getInstance()
+    {
+        if (instance == null) instance = new CustomerRequestDb();
+        return instance;
+    }
+
     //========================================Create Table========================================
     public boolean createCustomerRequestTable()
     {
@@ -31,6 +41,8 @@ public class CustomerRequestDb extends AbstractDb
                 + "VALUES (?, ?, ?, ?, ?, ?)";
 
         List<DbData> data = this.getDataFromCustomerRequest(customerRequest);
+
+        System.out.println("===insert CustomerRequest===");
         String result = this.insertData(url, sql, data);
         if (result == null) 
         {
@@ -44,21 +56,29 @@ public class CustomerRequestDb extends AbstractDb
     //===========================================Query============================================
     public CustomerRequest queryCustomerRequestData(String id)
     {
-        String sql = """
-            SELECT * FROM CustomerRequests this WHERE Id = ?
-            LEFT JOIN Shops ON this.ShopId = Shops.Id
-            LEFT JOIN Customers ON this.RequestedCustomerId = Customers.Id
-            LEFT JOIN Staffs ON this.HandledStaffId = Staffs.Id
-            LEFT JOIN RequestedItems ON this.Id = RequestedItems.CustomerRequestId        
-        """;
-
+        // Private Info
         DbData queryData = new DbData(id);
-        List<String> rowNames = this.getRowNames();
-        List<DbType> rowTypes = this.getRowTypes();
-
-        List<List<DbData>> datas = this.queryDatas(url, sql, queryData, rowNames, rowTypes);
+        String queryValue = "Id";
+        List<List<DbData>> datas = this.queryCustomerRequestRawDatas(queryData, queryValue);
         if (datas.isEmpty()) return null;
-        return this.getCustomerRequestData(datas);
+        CustomerRequest customerRequest = this.getCustomerRequestData(datas.get(0));
+
+        // Shop
+        String shopId = datas.get(0).get(2).getValueStr();
+        Shop shop = new ShopDb().queryShopPriData(shopId);
+
+        // Customer
+        String customerId = datas.get(0).get(3).getValueStr();
+        Customer customer = new CustomerDb().queryCustomerPriData(customerId);
+
+        // Staff
+        String staffId = datas.get(0).get(4).getValueStr();
+        Staff staff = new StaffDb().queryStaffPriData(staffId);
+
+        customerRequest.setShop(shop);
+        customerRequest.setRequestedCustomer(customer);
+        customerRequest.setHandledStaff(staff);
+        return customerRequest;
     }
 
     // Private Info
@@ -68,29 +88,36 @@ public class CustomerRequestDb extends AbstractDb
         String queryValue = "Id";
         List<List<DbData>> datas = this.queryCustomerRequestRawDatas(queryData, queryValue);
 
-        return this.getCustomerRequestPriData(datas.get(0), 0);
+        return this.getCustomerRequestData(datas.get(0));
     }
 
     // Other
     public List<List<DbData>> queryCustomerRequestRawDatas(DbData queryData, String queryValue)
     {
         String sql = "SELECT * FROM CustomerRequests this WHERE " + queryValue + " = ?";
-        List<String> rowNames = this.getRowNames();
-        List<DbType> rowTypes = this.getRowTypes();
-        
+        List<String> rowNames = this.getCustomerRequestRowNames();
+        List<DbType> rowTypes = this.getCustomerRequestRowTypes();
+
+        System.out.println("===query CustomerRequest===");
         return this.queryDatas(url, sql, queryData, rowNames, rowTypes);
     }
 
     //===========================================Update===========================================
     public String updateCustomerRequestData(CustomerRequest customerRequest)
     {
-        String sql = "UPDATE CustomerRequests SET * WHERE Id = ?";
+        String sql = """
+            UPDATE CustomerRequests SET 
+            Name = ?, ShopId = ?, RequestedCustomerId = ?, HandledStaffId = ?, IsSold = ?
+            WHERE Id = ?
+        """;
 
         List<DbData> data = this.getDataFromCustomerRequest(customerRequest);
         DbData id = data.get(0);
         data.remove(0);
+        data.add(id);
 
-        return this.updateData(url, sql, id, data);
+        System.out.println("===update CustomerRequest===");
+        return this.updateData(url, sql, data);
     }
 
     //===========================================Delete===========================================
@@ -109,7 +136,6 @@ public class CustomerRequestDb extends AbstractDb
 
     //===========================================Other============================================
     // ===Query===
-    // CustomerRequest Pri
     public List<String> getCustomerRequestRowNames()
     {
         List<String> rowNames = new ArrayList<>();
@@ -136,87 +162,16 @@ public class CustomerRequestDb extends AbstractDb
         return rowTypes;
     }
 
-    public CustomerRequest getCustomerRequestPriData(List<DbData> data, int begin)
+    public CustomerRequest getCustomerRequestData(List<DbData> data)
     {
-        String id = data.get(begin).getValueStr();
-        String name = data.get(begin + 1).getValueStr();
-        // String shopId = data.get(begin + 2).getValueStr();
-        // String requestedCustomerId = data.get(begin + 3).getValueStr();
-        // String handledStaffId = data.get(begin + 4).getValueStr();
-        boolean isSold = data.get(begin + 5).getValueInt() == 1;
+        String id = data.get(0).getValueStr();
+        String name = data.get(1).getValueStr();
+        // String shopId = data.get(2).getValueStr();
+        // String requestedCustomerId = data.get(3).getValueStr();
+        // String handledStaffId = data.get(4).getValueStr();
+        boolean isSold = data.get(5).getValueInt() == 1;
         
         return new CustomerRequest(id, name, isSold);
-    }
-
-    // CustomerRequest
-    private List<String> getRowNames()
-    {
-        List<String> rowNames = this.getCustomerRequestRowNames();
-        for (String name : new ShopDb().getShopRowNames()) rowNames.add(name);
-        for (String name : new CustomerDb().getCustomerRowNames()) rowNames.add(name);
-        for (String name : new StaffDb().getStaffRowNames()) rowNames.add(name);
-        for (String name : new RequestedItemDb().getRequestedItemRowNames()) rowNames.add(name);
-
-        return rowNames;
-    }
-
-    private List<DbType> getRowTypes()
-    {
-        List<DbType> rowTypes = this.getCustomerRequestRowTypes();
-        for (DbType type : new ShopDb().getShopRowTypes()) rowTypes.add(type);
-        for (DbType type : new CustomerDb().getCustomerRowTypes()) rowTypes.add(type);
-        for (DbType type : new StaffDb().getStaffRowTypes()) rowTypes.add(type);
-        for (DbType type : new RequestedItemDb().getRequestedItemRowTypes()) rowTypes.add(type);
-
-        return rowTypes;
-    }
-
-    private CustomerRequest getCustomerRequestData(List<List<DbData>> datas)
-    {
-        List<DbData> customerRequestData = datas.get(0);
-        CustomerRequest customerRequest = this.getCustomerRequestPriData(customerRequestData, 0);
-        if (customerRequest.getId() == null) return null;
-
-        Shop shop = null;
-        for (List<DbData> shopData : datas)
-        {
-            Shop newShop = new ShopDb().getShopPriData(shopData, 6);
-            if (newShop.getId() == null) continue;
-            shop = newShop;
-            break;
-        }
-
-        Customer requestedCustomer = null;
-        for (List<DbData> customerData : datas)
-        {
-            Customer newCustomer = new CustomerDb().getCustomerPriData(customerData, 12);
-            if (newCustomer.getId() == null) continue;
-            requestedCustomer = newCustomer;
-            break;
-        }
-
-        Staff handledStaff = null;
-        for (List<DbData> staffData : datas)
-        {
-            Staff newStaff = new StaffDb().getStaffPriData(staffData, 18);
-            if (newStaff.getId() == null) continue;
-            handledStaff = newStaff;
-            break;
-        }
-
-        List<RequestedItem> requestedItems = new ArrayList<>();
-        for (List<DbData> requestedItemData : datas)
-        {
-            RequestedItem newRequestedItem = new RequestedItemDb().getRequestedItemPriData(requestedItemData, 25);
-            if (newRequestedItem.getId() == null) continue;
-            requestedItems.add(newRequestedItem);
-        }
-
-        customerRequest.setShop(shop);
-        customerRequest.setRequestedCustomer(requestedCustomer);
-        customerRequest.setHandledStaff(handledStaff);
-        customerRequest.setRequestedItems(requestedItems);
-        return customerRequest;
     }
 
     // ===Update - Insert===
@@ -224,10 +179,22 @@ public class CustomerRequestDb extends AbstractDb
     {
         DbData id = new DbData(customerRequest.getId());
         DbData name = new DbData(customerRequest.getName());
-        DbData shopId = new DbData(customerRequest.getShop().getId());
-        DbData requestedCustomerId = new DbData(customerRequest.getRequestedCustomer().getId());
-        DbData handledStaffId = new DbData(customerRequest.getHandledStaff().getId());
+        DbData shopId = new DbData("NULL");
+        DbData requestedCustomerId = new DbData("NULL");
+        DbData handledStaffId = new DbData("NULL");
         DbData isSold = new DbData(customerRequest.getIsSold() ? 1 : 0);
+        if (customerRequest.getShop() != null)
+        {
+            shopId = new DbData(customerRequest.getShop().getId());
+        }
+        if (customerRequest.getRequestedCustomer() != null)
+        {
+            requestedCustomerId = new DbData(customerRequest.getRequestedCustomer().getId());
+        }
+        if (customerRequest.getHandledStaff() != null)
+        {
+            handledStaffId = new DbData(customerRequest.getHandledStaff().getId());
+        }
 
         List<DbData> data = new ArrayList<>();
         data.add(id);

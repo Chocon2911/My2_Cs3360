@@ -6,6 +6,16 @@ import java.util.*;
 
 public class RequestedItemDb extends AbstractDb
 {
+    //==========================================Variable==========================================
+    private static RequestedItemDb instance;
+
+    //=========================================Singleton==========================================
+    public static RequestedItemDb getInstance()
+    {
+        if (instance == null) instance = new RequestedItemDb();
+        return instance;
+    }
+
     //========================================Create Table========================================
     public boolean createRequestedItemTable()
     {
@@ -31,6 +41,8 @@ public class RequestedItemDb extends AbstractDb
                 + "VALUES (?, ?, ?, ?, ?, ?)";
 
         List<DbData> data = this.getDataFromRequestedItem(requestedItem);
+
+        System.out.println("===insert RequestedItem===");
         String result = this.insertData(url, sql, data);
         if (result == null) 
         {
@@ -49,7 +61,7 @@ public class RequestedItemDb extends AbstractDb
         String queryValue = "Id";
         List<List<DbData>> datas = this.queryRequestedItemRawDatas(queryData, queryValue);
         if (datas.isEmpty()) return null;
-        RequestedItem requestedItem = this.getRequestedItemPriData(datas.get(0), 0);
+        RequestedItem requestedItem = this.getRequestedItemData(datas.get(0));
 
         // Shop
         String shopId = datas.get(0).get(1).getValueStr();
@@ -81,7 +93,7 @@ public class RequestedItemDb extends AbstractDb
         String queryValue = "Id";
         List<List<DbData>> datas = this.queryRequestedItemRawDatas(queryData, queryValue);
         
-        return this.getRequestedItemPriData(datas.get(0), 0);
+        return this.getRequestedItemData(datas.get(0));
     }
 
     // Other
@@ -91,19 +103,26 @@ public class RequestedItemDb extends AbstractDb
         List<String> rowNames = this.getRequestedItemRowNames();
         List<DbType> rowTypes = this.getRequestedItemRowTypes();
 
+        System.out.println("===query RequestedItem===");
         return this.queryDatas(url, sql, queryData, rowNames, rowTypes);
     }
 
     //===========================================Update===========================================
     public String updateRequestedItemData(RequestedItem requestedItem)
     {
-        String sql = "UPDATE RequestedItems SET * WHERE Id = ?";
+        String sql = """
+            UPDATE RequestedItems SET 
+            ShopId = ?, CustomerRequestId = ?, CustomerId = ?, ItemId = ?, Amount = ?
+            WHERE Id = ?
+        """;
 
         List<DbData> data = this.getDataFromRequestedItem(requestedItem);
         DbData id = data.get(0);
         data.remove(0);
+        data.add(id);
 
-        return this.updateData(url, sql, id, data);
+        System.out.println("===update RequestedItem===");
+        return this.updateData(url, sql, data);
     }
 
     //===========================================Delete===========================================
@@ -146,14 +165,14 @@ public class RequestedItemDb extends AbstractDb
         
         return rowTypes;
     }
-    public RequestedItem getRequestedItemPriData(List<DbData> data, int begin)
+    public RequestedItem getRequestedItemData(List<DbData> data)
     {
-        String id = data.get(begin).getValueStr();
-        // String shopId = data.get(begin + 1).getValueStr();
-        // String customerRequestId = data.get(begin + 2).getValueStr();
-        // String customerId = data.get(begin + 3).getValueStr();
-        // String itemId = data.get(begin + 4).getValueStr();
-        int amount = data.get(begin + 5).getValueInt(); 
+        String id = data.get(0).getValueStr();
+        // String shopId = data.get(1).getValueStr();
+        // String customerRequestId = data.get(2).getValueStr();
+        // String customerId = data.get(3).getValueStr();
+        // String itemId = data.get(4).getValueStr();
+        int amount = data.get(5).getValueInt(); 
 
         return new RequestedItem(id, amount);
     }
@@ -162,11 +181,27 @@ public class RequestedItemDb extends AbstractDb
     private List<DbData> getDataFromRequestedItem(RequestedItem requestedItem)
     {
         DbData id = new DbData(requestedItem.getId());
-        DbData shopId = new DbData(requestedItem.getShop().getId());
-        DbData customerRequestId = new DbData(requestedItem.getCustomerRequest().getId());
-        DbData customerId = new DbData(requestedItem.getCustomer().getId());
-        DbData itemId = new DbData(requestedItem.getItem().getId());
+        DbData shopId = new DbData("NULL");
+        DbData customerRequestId = new DbData("NULL");
+        DbData customerId = new DbData("NULL");
+        DbData itemId = new DbData("NULL");
         DbData amount = new DbData(requestedItem.getAmount());
+        if (requestedItem.getShop() != null)
+        {
+            shopId = new DbData(requestedItem.getShop().getId());
+        }
+        if (requestedItem.getCustomerRequest() != null)
+        {
+            customerRequestId = new DbData(requestedItem.getCustomerRequest().getId());
+        }
+        if (requestedItem.getCustomer() != null)
+        {
+            customerId = new DbData(requestedItem.getCustomer().getId());
+        }
+        if (requestedItem.getItem() != null)
+        {
+            itemId = new DbData(requestedItem.getItem().getId());
+        }
 
         List<DbData> data = new ArrayList<>();
         data.add(id);

@@ -1,18 +1,19 @@
 package UI.App2;
 
+import Controller.Child.ShopCtrl;
 import Util.GuiUtil;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import javax.swing.*;
 
-import Obj.Controller.ShopCtrl;
-
-public class ShopUI extends GuiUtil
+public class ShopUI
 {
     //==========================================Variable==========================================
-    private ShopCtrl shopCtrl;
+    private final ShopCtrl shopCtrl;
 
     //========================================Constructor=========================================
     public ShopUI()
@@ -24,17 +25,25 @@ public class ShopUI extends GuiUtil
     public ShopUI(String id)
     {
         this.shopCtrl = new ShopCtrl(id);
+        if (!this.shopCtrl.login())
+        {
+            System.out.println("ShopUI(): Error: Login failed");
+            return;
+        }
+
         this.displayMain();
     }
 
     //==========================================Main UI===========================================
     private void displayMain()
     {
+        GuiUtil guiUtil = GuiUtil.getInstance();
+
         // Frame
         JFrame frame = new JFrame("App2.Shop.Main");
-        frame.setSize(frameWidth, frameHeight);
+        frame.setSize(guiUtil.frameWidth, guiUtil.frameHeight);
         frame.setResizable(false);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultWindowClose(frame);
 
         // Main Panel
         JPanel panel = new JPanel();
@@ -42,12 +51,12 @@ public class ShopUI extends GuiUtil
 
         // Title Label
         JLabel titleLabel = new JLabel("Shop");
-        this.setAlignmentCenter(titleLabel);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, bigTitleSize));
+        guiUtil.setAlignmentCenter(titleLabel);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, guiUtil.bigTitleSize));
 
         // Information Button
-        JButton infoButton = createButton("Information", bigButtonWidth, bigButtonHeight);
-        this.setAlignmentCenter(infoButton);
+        JButton infoButton = guiUtil.createButton("Information", guiUtil.bigButtonWidth, guiUtil.bigButtonHeight);
+        guiUtil.setAlignmentCenter(infoButton);
         infoButton.addActionListener((ActionEvent e) -> 
         {
             frame.dispose();
@@ -55,8 +64,8 @@ public class ShopUI extends GuiUtil
         });
 
         // CreateManager Button
-        JButton createManagerButton = createButton("Create Manager", bigButtonWidth, bigButtonHeight);
-        this.setAlignmentCenter(createManagerButton);
+        JButton createManagerButton = guiUtil.createButton("Create Manager", guiUtil.bigButtonWidth, guiUtil.bigButtonHeight);
+        guiUtil.setAlignmentCenter(createManagerButton);
         createManagerButton.addActionListener((ActionEvent e) -> 
         {
             frame.dispose();
@@ -64,8 +73,8 @@ public class ShopUI extends GuiUtil
         });
 
         // ChangeCheckInCode Button
-        JButton changeCheckInCodeButton = createButton("Change Check In Code", bigButtonWidth, bigButtonHeight);
-        this.setAlignmentCenter(changeCheckInCodeButton);
+        JButton changeCheckInCodeButton = guiUtil.createButton("Change Check In Code", guiUtil.bigButtonWidth, guiUtil.bigButtonHeight);
+        guiUtil.setAlignmentCenter(changeCheckInCodeButton);
         changeCheckInCodeButton.addActionListener((ActionEvent e) -> 
         {
             frame.dispose();
@@ -73,8 +82,8 @@ public class ShopUI extends GuiUtil
         });
 
         // Quit Button
-        JButton quitButton = createButton("Quit", bigButtonWidth, bigButtonHeight);
-        this.setAlignmentCenter(quitButton);
+        JButton quitButton = guiUtil.createButton("Quit", guiUtil.bigButtonWidth, guiUtil.bigButtonHeight);
+        guiUtil.setAlignmentCenter(quitButton);
         quitButton.addActionListener((ActionEvent e) -> 
         {
             frame.dispose();
@@ -84,13 +93,13 @@ public class ShopUI extends GuiUtil
         // Display
         panel.add(Box.createVerticalGlue());
         panel.add(titleLabel);
-        panel.add(Box.createVerticalStrut(this.verticalStrut));
+        panel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
         panel.add(infoButton);
-        panel.add(Box.createVerticalStrut(this.verticalStrut));
+        panel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
         panel.add(createManagerButton);
-        panel.add(Box.createVerticalStrut(this.verticalStrut));
+        panel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
         panel.add(changeCheckInCodeButton);
-        panel.add(Box.createVerticalStrut(this.verticalStrut));
+        panel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
         panel.add(quitButton);
         panel.add(Box.createVerticalGlue());
         
@@ -102,11 +111,13 @@ public class ShopUI extends GuiUtil
     //=======================================Information UI=======================================
     private void displayInfo()
     {
+        GuiUtil guiUtil = GuiUtil.getInstance();
+
         // ===Frame===
         JFrame frame = new JFrame("App2.Shop.Main.Information");
         frame.setSize(600, 700);
         frame.setResizable(true);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultWindowClose(frame);
         frame.setLayout(new BorderLayout());
 
 
@@ -117,13 +128,13 @@ public class ShopUI extends GuiUtil
 
         // Title Label
         JLabel titleLabel = new JLabel("Information");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, bigTitleSize));
-        this.setAlignmentCenter(titleLabel);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, guiUtil.bigTitleSize));
+        guiUtil.setAlignmentCenter(titleLabel);
 
         // Display
         panel.add(Box.createVerticalGlue());
         panel.add(titleLabel);
-        panel.add(Box.createHorizontalStrut(verticalStrut));
+        panel.add(Box.createHorizontalStrut(guiUtil.verticalStrut));
         panel.add(shopCtrl.displayInfo());
         panel.add(Box.createVerticalGlue());
 
@@ -135,7 +146,7 @@ public class ShopUI extends GuiUtil
         backPanel.setLayout(new BoxLayout(backPanel, BoxLayout.Y_AXIS));
 
         // Back Button
-        JButton backButton = this.createButton("Back", smallButtonWidth, bigButtonHeight);
+        JButton backButton = guiUtil.createButton("Back", guiUtil.smallButtonWidth, guiUtil.bigButtonHeight);
         backButton.setAlignmentY(Component.TOP_ALIGNMENT);
         backButton.addActionListener((ActionEvent e) -> 
         {
@@ -144,7 +155,7 @@ public class ShopUI extends GuiUtil
         });
 
         // Display
-        backPanel.add(Box.createVerticalStrut(verticalStrut));
+        backPanel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
         backPanel.add(backButton);
 
 
@@ -165,11 +176,13 @@ public class ShopUI extends GuiUtil
     //=====================================Create Manager UI======================================
     private void displayCreateManager()
     {
+        GuiUtil guiUtil = GuiUtil.getInstance();
+
         // ===Frame===
         JFrame frame = new JFrame("App2.Shop.Main.CreateManager");
-        frame.setSize(frameWidth, frameHeight);
-        frame.setResizable(false);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(guiUtil.frameWidth, guiUtil.frameHeight);
+        frame.setResizable(true);
+        this.setDefaultWindowClose(frame);
 
 
 
@@ -181,8 +194,8 @@ public class ShopUI extends GuiUtil
 
         // ===Title Label===
         JLabel titleLabel = new JLabel("Create Manager");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, bigTitleSize));
-        this.setAlignmentCenter(titleLabel);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, guiUtil.bigTitleSize));
+        guiUtil.setAlignmentCenter(titleLabel);
 
 
 
@@ -190,20 +203,20 @@ public class ShopUI extends GuiUtil
         // Panel
         JPanel namePanel = new JPanel();
         namePanel.setLayout(new BoxLayout(namePanel, BoxLayout.X_AXIS));
-        this.setFixedSize(namePanel, panelTextFieldWidth, panelTextFieldHeight);
+        guiUtil.setFixedSize(namePanel, guiUtil.panelTextFieldWidth, guiUtil.panelTextFieldHeight);
 
         // Name Label
         JLabel nameLabel = new JLabel("Name: ");
-        this.setAlignmentCenter(nameLabel);
-        this.setFixedSize(nameLabel, normalLabelWidth, normalLabelHeight);
+        guiUtil.setAlignmentCenter(nameLabel);
+        guiUtil.setFixedSize(nameLabel, guiUtil.smallLabelWidth, guiUtil.normalLabelHeight);
 
         // Name TextField
-        JTextField nameTextField = new JTextField(this.textFieldAmount);
+        JTextField nameTextField = new JTextField(guiUtil.textFieldAmount);
 
         // Display
         namePanel.add(Box.createHorizontalGlue());
         namePanel.add(nameLabel);
-        namePanel.add(Box.createHorizontalStrut(this.horizontalStrut));
+        namePanel.add(Box.createHorizontalStrut(guiUtil.horizontalStrut));
         namePanel.add(nameTextField);
         namePanel.add(Box.createHorizontalGlue());
 
@@ -213,20 +226,20 @@ public class ShopUI extends GuiUtil
         // Panel
         JPanel userNamePanel = new JPanel();
         userNamePanel.setLayout(new BoxLayout(userNamePanel, BoxLayout.X_AXIS));
-        this.setFixedSize(userNamePanel, panelTextFieldWidth, panelTextFieldHeight);
+        guiUtil.setFixedSize(userNamePanel, guiUtil.panelTextFieldWidth, guiUtil.panelTextFieldHeight);
 
         // UserName Label
         JLabel userNameLabel = new JLabel("UserName: ");
-        this.setAlignmentCenter(userNameLabel);
-        this.setFixedSize(userNameLabel, normalLabelWidth, normalLabelHeight);
+        guiUtil.setAlignmentCenter(userNameLabel);
+        guiUtil.setFixedSize(userNameLabel, guiUtil.smallLabelWidth, guiUtil.normalLabelHeight);
 
         // UserName TextField
-        JTextField userNameTextField = new JTextField(this.textFieldAmount);
+        JTextField userNameTextField = new JTextField(guiUtil.textFieldAmount);
 
         // Display
         userNamePanel.add(Box.createHorizontalGlue());
         userNamePanel.add(userNameLabel);
-        userNamePanel.add(Box.createHorizontalStrut(this.horizontalStrut));
+        userNamePanel.add(Box.createHorizontalStrut(guiUtil.horizontalStrut));
         userNamePanel.add(userNameTextField);
         userNamePanel.add(Box.createHorizontalGlue());
 
@@ -236,20 +249,20 @@ public class ShopUI extends GuiUtil
         // Panel
         JPanel passwordPanel = new JPanel();
         passwordPanel.setLayout(new BoxLayout(passwordPanel, BoxLayout.X_AXIS));
-        this.setFixedSize(passwordPanel, panelTextFieldWidth, panelTextFieldHeight);
+        guiUtil.setFixedSize(passwordPanel, guiUtil.panelTextFieldWidth, guiUtil.panelTextFieldHeight);
 
         // Password Label
         JLabel passwordLabel = new JLabel("Password: ");
-        this.setAlignmentCenter(passwordLabel);
-        this.setFixedSize(passwordLabel, normalLabelWidth, normalLabelHeight);
+        guiUtil.setAlignmentCenter(passwordLabel);
+        guiUtil.setFixedSize(passwordLabel, guiUtil.smallLabelWidth, guiUtil.normalLabelHeight);
 
         // Password TextField
-        JPasswordField passwordTextField = new JPasswordField(this.textFieldAmount);
+        JPasswordField passwordTextField = new JPasswordField(guiUtil.textFieldAmount);
 
         // Display
         passwordPanel.add(Box.createHorizontalGlue());
         passwordPanel.add(passwordLabel);
-        passwordPanel.add(Box.createHorizontalStrut(this.horizontalStrut));
+        passwordPanel.add(Box.createHorizontalStrut(guiUtil.horizontalStrut));
         passwordPanel.add(passwordTextField);
         passwordPanel.add(Box.createHorizontalGlue());
 
@@ -259,11 +272,11 @@ public class ShopUI extends GuiUtil
         // Panel
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
-        this.setAlignmentCenter(buttonPanel);
+        guiUtil.setAlignmentCenter(buttonPanel);
 
         // Back Button
-        JButton backButton = this.createButton("Cancel", smallButtonWidth, smallButtonHeight);
-        this.setAlignmentCenter(backButton);
+        JButton backButton = guiUtil.createButton("Cancel", guiUtil.smallButtonWidth, guiUtil.smallButtonHeight);
+        guiUtil.setAlignmentCenter(backButton);
         backButton.addActionListener((ActionEvent e) -> 
         {
             frame.dispose();
@@ -271,8 +284,8 @@ public class ShopUI extends GuiUtil
         });
 
         // Create Button
-        JButton createButton = this.createButton("Create", smallButtonWidth, smallButtonHeight);
-        this.setAlignmentCenter(createButton);
+        JButton createButton = guiUtil.createButton("Create", guiUtil.smallButtonWidth, guiUtil.smallButtonHeight);
+        guiUtil.setAlignmentCenter(createButton);
         createButton.addActionListener((ActionEvent e) -> 
         {
             int createManager = this.shopCtrl.createManager(nameTextField.getText(), userNameTextField.getText(), String.valueOf(passwordTextField.getPassword()));
@@ -291,7 +304,7 @@ public class ShopUI extends GuiUtil
         // Display
         buttonPanel.add(Box.createHorizontalGlue());
         buttonPanel.add(backButton);
-        buttonPanel.add(Box.createHorizontalStrut(this.horizontalStrut));
+        buttonPanel.add(Box.createHorizontalStrut(guiUtil.horizontalStrut));
         buttonPanel.add(createButton);
         buttonPanel.add(Box.createHorizontalGlue());
 
@@ -300,13 +313,13 @@ public class ShopUI extends GuiUtil
         // ===Display===
         panel.add(Box.createVerticalGlue());
         panel.add(titleLabel);
-        panel.add(Box.createVerticalStrut(verticalStrut));
+        panel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
         panel.add(namePanel);
-        panel.add(Box.createVerticalStrut(verticalStrut));
+        panel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
         panel.add(userNamePanel);
-        panel.add(Box.createVerticalStrut(verticalStrut));
+        panel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
         panel.add(passwordPanel);
-        panel.add(Box.createVerticalStrut(verticalStrut));
+        panel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
         panel.add(buttonPanel);
         panel.add(Box.createVerticalGlue());
 
@@ -317,11 +330,13 @@ public class ShopUI extends GuiUtil
     //===================================Change CheckIn Code UI===================================
     private void displayChangeCheckInCode()
     {
+        GuiUtil guiUtil = GuiUtil.getInstance();
+
         // ===Frame===
         JFrame frame = new JFrame("App2.Shop.Main.ChangeCheckInCode");
-        frame.setSize(frameWidth, frameHeight);
+        frame.setSize(guiUtil.frameWidth, guiUtil.frameHeight);
         frame.setResizable(false);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultWindowClose(frame);
 
 
 
@@ -333,8 +348,8 @@ public class ShopUI extends GuiUtil
 
         // ===Title Label===
         JLabel titleLabel = new JLabel("Change CheckIn Code");
-        this.setAlignmentCenter(titleLabel);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, bigTitleSize));
+        guiUtil.setAlignmentCenter(titleLabel);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, guiUtil.bigTitleSize));
 
 
         
@@ -342,20 +357,20 @@ public class ShopUI extends GuiUtil
         // Panel
         JPanel checkInPanel = new JPanel();
         checkInPanel.setLayout(new BoxLayout(checkInPanel, BoxLayout.X_AXIS));
-        this.setFixedSize(checkInPanel, panelTextFieldWidth, panelTextFieldHeight);
+        guiUtil.setFixedSize(checkInPanel, guiUtil.panelTextFieldWidth, guiUtil.panelTextFieldHeight);
 
         // CheckIn Label
         JLabel checkInLabel = new JLabel("CheckIn Code: ");
-        this.setAlignmentCenter(checkInLabel);
-        this.setFixedSize(checkInLabel, normalLabelWidth, normalLabelHeight);
+        guiUtil.setAlignmentCenter(checkInLabel);
+        guiUtil.setFixedSize(checkInLabel, guiUtil.smallLabelWidth, guiUtil.normalLabelHeight);
 
         // CheckIn TextField
-        JTextField checkInField = new JTextField(textFieldAmount);
+        JTextField checkInField = new JTextField(guiUtil.textFieldAmount);
 
         // Display
         checkInPanel.add(Box.createHorizontalGlue());
         checkInPanel.add(checkInLabel);
-        checkInPanel.add(Box.createHorizontalStrut(horizontalStrut));
+        checkInPanel.add(Box.createHorizontalStrut(guiUtil.horizontalStrut));
         checkInPanel.add(checkInField);
         checkInPanel.add(Box.createHorizontalGlue());
 
@@ -365,11 +380,11 @@ public class ShopUI extends GuiUtil
         // Panel
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
-        this.setAlignmentCenter(buttonPanel);
+        guiUtil.setAlignmentCenter(buttonPanel);
 
         // Cancel Button
-        JButton cancelButton = this.createButton("Cancel", smallButtonWidth, smallButtonHeight);
-        this.setAlignmentCenter(cancelButton);
+        JButton cancelButton = guiUtil.createButton("Cancel", guiUtil.smallButtonWidth, guiUtil.smallButtonHeight);
+        guiUtil.setAlignmentCenter(cancelButton);
         cancelButton.addActionListener((ActionEvent e) -> 
         {
             frame.dispose();
@@ -377,20 +392,29 @@ public class ShopUI extends GuiUtil
         });
 
         // Apply Button
-        JButton createButton = this.createButton("Apply", smallButtonWidth, smallButtonHeight);
-        this.setAlignmentCenter(createButton);
+        JButton createButton = guiUtil.createButton("Apply", guiUtil.smallButtonWidth, guiUtil.smallButtonHeight);
+        guiUtil.setAlignmentCenter(createButton);
         createButton.addActionListener((ActionEvent e) -> 
         {
-            this.shopCtrl.changeCheckInCode(checkInField.getText());
-            JOptionPane.showMessageDialog(null, "Change CheckIn Code Success");
-            frame.dispose();
-            displayMain();
+            String checkInCode = checkInField.getText();
+
+            int changeCheckInCode = this.shopCtrl.changeCheckInCode(checkInCode);
+            if (changeCheckInCode == 1)
+            {
+                JOptionPane.showMessageDialog(null, "CheckIn Code is already exist");
+            }
+            else
+            {
+                JOptionPane.showMessageDialog(null, "Change CheckIn Code Success");
+                frame.dispose();
+                displayMain();
+            }
         });
         
         // Display
         buttonPanel.add(Box.createHorizontalGlue());
         buttonPanel.add(cancelButton);
-        buttonPanel.add(Box.createHorizontalStrut(horizontalStrut));
+        buttonPanel.add(Box.createHorizontalStrut(guiUtil.horizontalStrut));
         buttonPanel.add(createButton);
         buttonPanel.add(Box.createHorizontalGlue());
 
@@ -399,9 +423,9 @@ public class ShopUI extends GuiUtil
         // ===Display===
         panel.add(Box.createVerticalGlue());
         panel.add(titleLabel);
-        panel.add(Box.createVerticalStrut(verticalStrut));
+        panel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
         panel.add(checkInPanel);
-        panel.add(Box.createVerticalStrut(verticalStrut));
+        panel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
         panel.add(buttonPanel);
         panel.add(Box.createVerticalGlue());
 
@@ -412,7 +436,25 @@ public class ShopUI extends GuiUtil
     //==========================================Quit UI===========================================
     private void displayQuit()
     {
+        shopCtrl.logout();
         new App2UI();
+    }
+
+    //===========================================Other============================================
+    private void setDefaultWindowClose(JFrame frame)
+    {
+        frame.addWindowListener(new WindowAdapter()
+        {
+            @Override
+            public void windowClosing(WindowEvent e)
+            {
+                if (!shopCtrl.logout())
+                {
+                    System.out.println("Log out failed");
+                }
+                System.exit(0);
+            }
+        });
     }
 
     //============================================Test============================================

@@ -1,8 +1,6 @@
 package Obj.Base;
 
-import Util.ObjUtil;
-
-public abstract class AbstractObj extends ObjUtil
+public abstract class AbstractObj
 {
 	//==========================================Variable==========================================
 	protected String id;

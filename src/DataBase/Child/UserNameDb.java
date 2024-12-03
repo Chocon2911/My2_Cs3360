@@ -5,6 +5,16 @@ import java.util.*;
 
 public class UserNameDb extends AbstractDb
 {
+    //==========================================Variable==========================================
+    private static UserNameDb instance;
+
+    //=========================================Singleton==========================================
+    public static UserNameDb getInstance()
+    {
+        if (instance == null) instance = new UserNameDb();
+        return instance;
+    }
+
     //========================================CreateTable=========================================
     public boolean createUserNameTable()
     {
@@ -19,6 +29,8 @@ public class UserNameDb extends AbstractDb
         String sql = "INSERT INTO userNames (GlobalUserName) VALUES (?)";
         List<DbData> data = new ArrayList<>();
         data.add(new DbData(userName));
+
+        System.out.println("===insert UserName===");
         return this.insertData(url, sql, data);
     }
 

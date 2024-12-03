@@ -1,7 +1,7 @@
-package Obj.Controller;
+package Controller.Child;
 
+import Controller.Base.AbstractObjCtrl;
 import DataBase.Child.*;
-import Obj.Base.AbstractObjCtrl;
 import Obj.Data.*;
 
 public class CustomerCtrl extends AbstractObjCtrl
@@ -14,17 +14,17 @@ public class CustomerCtrl extends AbstractObjCtrl
     @Override
     protected <T> String insertInfo(T info) 
     { 
-        return new CustomerDb().insertCustomerData((Customer)info); 
+        return CustomerDb.getInstance().insertCustomerData((Customer)info); 
     }
     @Override
     @SuppressWarnings("unchecked")
     protected Customer queryInfo()
     {
-        return new CustomerDb().queryCustomerData(id);
+        return CustomerDb.getInstance().queryCustomerData(id);
     }
     @Override
     protected <T> String updateInfo(T info)
     {
-        return new CustomerDb().updateCustomerData((Customer)info);
+        return CustomerDb.getInstance().updateCustomerData((Customer)info);
     }
 }

@@ -1,7 +1,7 @@
-package Obj.Controller;
+package Controller.Child;
 
+import Controller.Base.AbstractObjCtrl;
 import DataBase.Child.*;
-import Obj.Base.AbstractObjCtrl;
 import Obj.Data.*;
 
 public class StaffCtrl extends AbstractObjCtrl

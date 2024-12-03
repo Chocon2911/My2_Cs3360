@@ -7,6 +7,16 @@ import java.util.List;
 
 public class ShopDb extends AbstractDb
 {
+    //==========================================Variable==========================================
+    private static ShopDb instance;
+
+    //=========================================Singleton==========================================
+    public static ShopDb getInstance()
+    {
+        if (instance == null) instance = new ShopDb();
+        return instance;
+    }
+
     //========================================Create Table========================================
     public boolean createShopTable()
     {
@@ -16,8 +26,9 @@ public class ShopDb extends AbstractDb
                 + "Name TEXT, "
                 + "UserName TEXT UNIQUE, "
                 + "Password TEXT, "
+                + "IsLogin INTEGER, "
                 + "SystemCode TEXT, "
-                + "CheckInCode TEXT, "
+                + "CheckInCode TEXT UNIQUE, "
                 + "FOREIGN KEY (Id) REFERENCES ids (GlobalId), "
                 + "FOREIGN KEY (UserName) REFERENCES userNames (GlobalUserName)"
                 + ");";
@@ -29,10 +40,12 @@ public class ShopDb extends AbstractDb
     public String insertShopData(Shop shop)
     {
         String sql = "INSERT INTO Shops" 
-                + "(Id, Name, UserName, Password, SystemCode, CheckInCode) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+                + "(Id, Name, UserName, Password, IsLogin, SystemCode, CheckInCode) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         List<DbData> data = this.getDataFromShop(shop);
+
+        System.out.println("===insert Shop===");
         String result = this.insertData(url, sql, data);
         if (result == null) 
         {
@@ -56,7 +69,7 @@ public class ShopDb extends AbstractDb
 
         List<List<DbData>> datas = this.queryShopRawDatas(queryData, queryValue);
         if (datas.isEmpty()) return null;
-        Shop shop = this.getShopPriData(datas.get(0), 0);
+        Shop shop = this.getShopData(datas.get(0));
 
         // ActiveManagers
         queryValue = "ShopId";
@@ -64,7 +77,7 @@ public class ShopDb extends AbstractDb
         List<Manager> managers = new ArrayList<>();
         for (List<DbData> managerData : datas)
         {
-            Manager manager = new ManagerDb().getManagerPriData(managerData, 0);
+            Manager manager = new ManagerDb().getManagerData(managerData);
             managers.add(manager);
         }
 
@@ -74,7 +87,7 @@ public class ShopDb extends AbstractDb
         List<Staff> staffs = new ArrayList<>();
         for (List<DbData> staffData : datas)
         {
-            Staff staff = new StaffDb().getStaffPriData(staffData, 0);
+            Staff staff = new StaffDb().getStaffData(staffData);
             staffs.add(staff);
         }
 
@@ -84,7 +97,7 @@ public class ShopDb extends AbstractDb
         List<Customer> customers = new ArrayList<>();
         for (List<DbData> customerData : datas)
         {
-            Customer customer = new CustomerDb().getCustomerPriData(customerData, 0);
+            Customer customer = new CustomerDb().getCustomerData(customerData);
             customers.add(customer);
         }
 
@@ -94,7 +107,7 @@ public class ShopDb extends AbstractDb
         List<Item> items = new ArrayList<>();
         for (List<DbData> itemData : datas)
         {
-            Item item = new ItemDb().getItemPriData(itemData, 0);
+            Item item = new ItemDb().getItemData(itemData);
             items.add(item);
         }
 
@@ -104,7 +117,7 @@ public class ShopDb extends AbstractDb
         List<CustomerRequest> customerRequests = new ArrayList<>();
         for (List<DbData> customerRequestData : datas)
         {
-            CustomerRequest customerRequest = new CustomerRequestDb().getCustomerRequestPriData(customerRequestData, 0);
+            CustomerRequest customerRequest = new CustomerRequestDb().getCustomerRequestData(customerRequestData);
             customerRequests.add(customerRequest);
         }
 
@@ -126,14 +139,25 @@ public class ShopDb extends AbstractDb
         return this.queryShopData(datas.get(0).get(0).getValueStr());
     }
 
+    public Shop queryShopByCheckInCode(String checkInCode)
+    {
+        DbData queryData = new DbData(checkInCode);
+        String queryValue = "CheckInCode";
+        List<List<DbData>> datas = this.queryShopRawDatas(queryData, queryValue);
+        if (datas.isEmpty()) return null;
+
+        return this.queryShopData(datas.get(0).get(0).getValueStr());
+    }
+
     // Shop Pri
     public Shop queryShopPriData(String id)
     {
         DbData queryData = new DbData(id);
         String queryValue = "Id";
         List<List<DbData>> datas = this.queryShopRawDatas(queryData, queryValue);
+        if (datas.isEmpty()) return null;
 
-        return this.getShopPriData(datas.get(0), 0);
+        return this.getShopData(datas.get(0));
     }
 
     // Other
@@ -143,22 +167,30 @@ public class ShopDb extends AbstractDb
         List<String> rowNames = this.getShopRowNames();
         List<DbType> rowTypes = this.getShopRowTypes();
 
+        System.out.println("===query Shop===");
         return this.queryDatas(url, sql, queryData, rowNames, rowTypes);
     }
     
     //===========================================Update===========================================
     public String updateShopData(Shop shop)
     {
-        String sql = "UPDATE Shops SET * WHERE Id = ?";
-        List<DbData> datas = this.getDataFromShop(shop);
-        DbData id = datas.get(0);
-        datas.remove(0);
+        String sql = """
+        UPDATE Shops SET 
+        Name = ?, UserName = ?, Password = ?, IsLogin = ?, SystemCode = ?, CheckInCode = ? 
+        WHERE Id = ?
+        """;
+        
+        List<DbData> data = this.getDataFromShop(shop);
+        DbData id = data.get(0);
+        data.remove(0);
+        data.add(id);
 
-        return this.updateData(url, sql, id, datas);
+        System.out.println("===update Shop===");
+        return this.updateData(url, sql, data);
     }
 
     //===========================================Delete===========================================
-    public boolean deleteManagerData(String id)
+    public boolean deleteManagerData(String id, String userName)
     {
         String sql = "DELETE FROM Shops WHERE Id = ?";
         DbData idDb = new DbData();
@@ -182,6 +214,7 @@ public class ShopDb extends AbstractDb
         rowNames.add("Name");
         rowNames.add("UserName");
         rowNames.add("Password");
+        rowNames.add("IsLogin");
         rowNames.add("SystemCode");
         rowNames.add("CheckInCode");
 
@@ -195,22 +228,24 @@ public class ShopDb extends AbstractDb
         rowTypes.add(DbType.TEXT);    // Name
         rowTypes.add(DbType.TEXT);    // UserName
         rowTypes.add(DbType.TEXT);    // Password
+        rowTypes.add(DbType.INTEGER); // IsLogin
         rowTypes.add(DbType.TEXT);    // SystemCode
         rowTypes.add(DbType.TEXT);    // CheckInCode
         
         return rowTypes;
     }
 
-    public Shop getShopPriData(List<DbData> data, int begin)
+    public Shop getShopData(List<DbData> data)
     {
-        String id = data.get(begin).getValueStr();
-        String name = data.get(begin + 1).getValueStr();
-        String userName = data.get(begin + 2).getValueStr();
-        String password = data.get(begin + 3).getValueStr();
-        String systemCode = data.get(begin + 4).getValueStr();
-        String checkInCode = data.get(begin + 5).getValueStr();
+        String id = data.get(0).getValueStr();
+        String name = data.get(1).getValueStr();
+        String userName = data.get(2).getValueStr();
+        String password = data.get(3).getValueStr();
+        boolean isLogin = data.get(4).getValueInt() == 1;
+        String systemCode = data.get(5).getValueStr();
+        String checkInCode = data.get(6).getValueStr();
 
-        return new Shop(id, name, userName, password, systemCode, checkInCode);
+        return new Shop(id, name, userName, password, isLogin, systemCode, checkInCode);
     }
 
     // ===Upadte - Insert===
@@ -220,6 +255,7 @@ public class ShopDb extends AbstractDb
         DbData name = new DbData(shop.getName());
         DbData userName = new DbData(shop.getUserName());
         DbData password = new DbData(shop.getPassword());
+        DbData isLogin = new DbData(shop.getIsLogin() ? 1 : 0);
         DbData systemCode = new DbData(shop.getSystemCode());
         DbData checkInCode = new DbData(shop.getCheckInCode());
 
@@ -228,6 +264,7 @@ public class ShopDb extends AbstractDb
         data.add(name);
         data.add(userName);
         data.add(password);
+        data.add(isLogin);
         data.add(systemCode);
         data.add(checkInCode);
 

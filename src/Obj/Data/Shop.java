@@ -28,19 +28,19 @@ public class Shop extends AbstractAccount
 		this.customerRequests = null;
 	}
 
-	public Shop(String id, String name, String userName, String password, 
+	public Shop(String id, String name, String userName, String password, boolean isLogin, 
 	String systemCode, String checkInCode)
 	{
-		super(id, name, userName, password);
+		super(id, name, userName, password, isLogin);
 		this.systemCode = systemCode;
 		this.checkInCode = checkInCode;
 	}
 
-	public Shop(String id, String name, String userName, String password,
+	public Shop(String id, String name, String userName, String password, boolean isLogin,
 	String systemCode, String checkInCode, List<Manager> activeManagers, List<Staff> activeStaffs, 
     List<Customer> activeCustomers, List<Item> items, List<CustomerRequest> customerRequests)
 	{
-        super(id, name, userName, password);
+        super(id, name, userName, password, isLogin);
 		this.systemCode = systemCode;
 		this.checkInCode = checkInCode;
 		this.activeManagers = activeManagers;

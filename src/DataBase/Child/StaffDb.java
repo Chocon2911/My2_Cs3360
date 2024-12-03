@@ -10,6 +10,16 @@ import java.util.*;
 
 public class StaffDb extends AbstractDb
 {
+    //==========================================Variable==========================================
+    private static StaffDb instance;
+
+    //=========================================Singleton==========================================
+    public static StaffDb getInstance()
+    {
+        if (instance == null) instance = new StaffDb();
+        return instance;
+    }
+
     //========================================Create Table========================================
     public boolean createStaffTable()
     {
@@ -19,6 +29,7 @@ public class StaffDb extends AbstractDb
                 + "Name TEXT, "
                 + "UserName TEXT UNIQUE, "
                 + "Password TEXT, "
+                + "IsLogin INTEGER, "
                 + "ShopId TEXT, "
                 + "FOREIGN KEY (Id) REFERENCES ids (GlobalId), "
                 + "FOREIGN KEY (UserName) REFERENCES userNames (GlobalUserName)"
@@ -31,10 +42,12 @@ public class StaffDb extends AbstractDb
     public String insertStaffData(Staff staff)
     {
         String sql = "INSERT INTO Staffs "
-                + "(Id, Name, UserName, Password, ShopId) "
-                + "VALUES (?, ?, ?, ?, ?)";
+                + "(Id, Name, UserName, Password, IsLogin, ShopId) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
 
         List<DbData> data = this.getDataFromStaff(staff);
+
+        System.out.println("===insert Staff===");
         String result = this.insertData(url, sql, data);
         if (result == null)
         {
@@ -56,25 +69,39 @@ public class StaffDb extends AbstractDb
         String queryValue = "Id";
         List<List<DbData>> datas = this.queryStaffRawDatas(queryData, queryValue);
         if (datas.isEmpty()) return null;
-        Staff staff = this.getStaffPriData(datas.get(0), 0);
+        Staff staff = this.getStaffData(datas.get(0));
         
         // Shop
         String shopId = datas.get(0).get(4).getValueStr();
         Shop shop = new ShopDb().queryShopPriData(shopId);
 
         // List<CustomerRequest>
-        queryValue = "StaffId";
+        queryValue = "HandledStaffId";
         datas = new CustomerRequestDb().queryCustomerRequestRawDatas(queryData, queryValue);
         List<CustomerRequest> customerRequests = new ArrayList<>();
         for (List<DbData> customerRequestData : datas)
         {
-            CustomerRequest customerRequest = new CustomerRequestDb().getCustomerRequestPriData(customerRequestData, 0);
+            CustomerRequest customerRequest = new CustomerRequestDb().getCustomerRequestData(customerRequestData);
             customerRequests.add(customerRequest);
         }
 
         staff.setShop(shop);
         staff.setCustomerRequests(customerRequests);
         return staff;
+    }
+
+    public Staff queryStaffByUserName(String userName)
+    {
+        DbData queryData = new DbData(userName);
+        String queryValue = "UserName";
+        List<List<DbData>> datas = this.queryStaffRawDatas(queryData, queryValue);
+        if (datas.isEmpty()) 
+        {
+            System.out.println("queryStaffByUserName(): No Staff with UserName: " + userName);
+            return null;
+        }
+
+        return this.queryStaffData(datas.get(0).get(0).getValueStr());
     }
 
     // Private Info
@@ -84,7 +111,7 @@ public class StaffDb extends AbstractDb
         String queryValue = "Id";
         List<List<DbData>> datas = this.queryStaffRawDatas(queryData, queryValue);
 
-        return this.getStaffPriData(datas.get(0), 0);
+        return this.getStaffData(datas.get(0));
     }
 
     // Other
@@ -94,23 +121,30 @@ public class StaffDb extends AbstractDb
         List<String> rowNames = this.getStaffRowNames();
         List<DbType> rowTypes = this.getStaffRowTypes();
 
+        System.out.println("===query Staff===");
         return this.queryDatas(url, sql, queryData, rowNames, rowTypes);
     }
 
     //===========================================Update===========================================
     public String updateStaffData(Staff staff)
     {
-        String sql = "UPDATE Staffs SET * WHERE Id = ?";
+        String sql = """
+            UPDATE Staffs SET
+            Name = ?, UserName = ?, Password = ?, IsLogin = ?, ShopId = ?
+            WHERE Id = ?
+        """;
 
         List<DbData> data = this.getDataFromStaff(staff);
         DbData id = data.get(0);
         data.remove(0);
+        data.add(id);
 
-        return this.updateData(url, sql, id, data);
+        System.out.println("===update Staff===");
+        return this.updateData(url, sql, data);
     }
 
     //===========================================Delete===========================================
-    public boolean deleteStaffData(String id)
+    public boolean deleteStaffData(String id, String userName)
     {
         String sql = "DELETE FROM Staffs WHERE Id = ?";
         DbData idData = new DbData(id);
@@ -133,6 +167,7 @@ public class StaffDb extends AbstractDb
         rowNames.add("Name");
         rowNames.add("UserName");
         rowNames.add("Password");
+        rowNames.add("IsLogin");
         rowNames.add("ShopId");
 
         return rowNames;
@@ -145,20 +180,22 @@ public class StaffDb extends AbstractDb
         rowTypes.add(DbType.TEXT);    // Name
         rowTypes.add(DbType.TEXT);    // UserName
         rowTypes.add(DbType.TEXT);    // Password
+        rowTypes.add(DbType.INTEGER); // IsLogin
         rowTypes.add(DbType.TEXT);    // ShopId
 
         return rowTypes;
     }
 
-    public Staff getStaffPriData(List<DbData> data, int begin)
+    public Staff getStaffData(List<DbData> data)
     {
-        String id = data.get(begin).getValueStr();
-        String name = data.get(begin + 1).getValueStr();
-        String userName = data.get(begin + 2).getValueStr();
-        String password = data.get(begin + 3).getValueStr();
-        // String shopId = data.get(begin + 4).getValueStr();
+        String id = data.get(0).getValueStr();
+        String name = data.get(1).getValueStr();
+        String userName = data.get(2).getValueStr();
+        String password = data.get(3).getValueStr();
+        boolean isLogin = data.get(4).getValueInt() == 1;
+        // String shopId = data.get(5).getValueStr();
 
-        return new Staff(id, name, userName, password);
+        return new Staff(id, name, userName, password, isLogin);
     }
 
     // ===Update - Insert===
@@ -168,13 +205,19 @@ public class StaffDb extends AbstractDb
         DbData name = new DbData(staff.getName());
         DbData userName = new DbData(staff.getUserName());
         DbData password = new DbData(staff.getPassword());
-        DbData shopId = new DbData(staff.getShop().getId());
+        DbData isLogin = new DbData(staff.getIsLogin() ? 1 : 0);
+        DbData shopId = new DbData("NULL");
+        if (staff.getShop() != null)
+        {
+            shopId = new DbData(staff.getShop().getId());
+        }
 
         List<DbData> data = new ArrayList<>();
         data.add(id);
         data.add(name);
         data.add(userName);
         data.add(password);
+        data.add(isLogin);
         data.add(shopId);
 
         return data;

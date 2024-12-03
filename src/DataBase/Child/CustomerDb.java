@@ -6,6 +6,16 @@ import java.util.*;
 
 public class CustomerDb extends AbstractDb
 {
+    //==========================================Variable==========================================
+    private static CustomerDb instance;
+
+    //=========================================Singleton==========================================
+    public static final CustomerDb getInstance()
+    {
+        if (instance == null) instance = new CustomerDb();
+        return instance;
+    }
+
     //========================================Create Table========================================
     public boolean createCustomerTable()
     {
@@ -15,6 +25,7 @@ public class CustomerDb extends AbstractDb
                 + "Name TEXT, "
                 + "UserName TEXT UNIQUE, "
                 + "Password TEXT, "
+                + "IsLogin INTEGER, "
                 + "Balance FLOAT, "
                 + "ShopId TEXT, "
                 + "FOREIGN KEY (Id) REFERENCES ids (GlobalId), "
@@ -28,10 +39,12 @@ public class CustomerDb extends AbstractDb
     public String insertCustomerData(Customer customer)
     {
         String sql = "INSERT INTO Customers "
-                + "(Id, Name, UserName, Password, Balance, ShopId) "
-                + "VALUES(?, ?, ?, ?, ?, ?)";
+                + "(Id, Name, UserName, Password, IsLogin, Balance, ShopId) "
+                + "VALUES(?, ?, ?, ?, ?, ?, ?)";
 
         List<DbData> data = this.getDataFromCustomer(customer);
+
+        System.out.println("===insert Customer===");
         String result = this.insertData(url, sql, data);
         if (result == null)
         { 
@@ -53,19 +66,19 @@ public class CustomerDb extends AbstractDb
         String queryValue = "Id";
         List<List<DbData>> datas = this.queryCustomerRawDatas(queryData, queryValue);
         if (datas.isEmpty()) return null;
-        Customer customer = this.getCustomerPriData(datas.get(0), 0);
+        Customer customer = this.getCustomerData(datas.get(0));
 
         // Shop
         String shopId = datas.get(0).get(5).getValueStr();
         Shop shop = new ShopDb().queryShopPriData(shopId);
 
         // CustomerRequests
-        queryValue = "CustomerId";
+        queryValue = "RequestedCustomerId";
         datas = new CustomerRequestDb().queryCustomerRequestRawDatas(queryData, queryValue);
         List<CustomerRequest> customerRequests = new ArrayList<>();
         for (List<DbData> customerRequestData : datas)
         {
-            CustomerRequest customerRequest = new CustomerRequestDb().getCustomerRequestPriData(customerRequestData, 0);
+            CustomerRequest customerRequest = new CustomerRequestDb().getCustomerRequestData(customerRequestData);
             customerRequests.add(customerRequest);
         }
 
@@ -75,7 +88,7 @@ public class CustomerDb extends AbstractDb
         List<RequestedItem> requestedItems = new ArrayList<>();
         for (List<DbData> requestedItemData : datas)
         {
-            RequestedItem requestedItem = new RequestedItemDb().getRequestedItemPriData(requestedItemData, 0);
+            RequestedItem requestedItem = new RequestedItemDb().getRequestedItemData(requestedItemData);
             requestedItems.add(requestedItem);
         }
 
@@ -85,6 +98,16 @@ public class CustomerDb extends AbstractDb
         return customer;
     }
 
+    public Customer queryCustomerByUserName(String userName)
+    {
+        DbData queryData = new DbData(userName);
+        String queryValue = "UserName";
+        List<List<DbData>> datas = this.queryCustomerRawDatas(queryData, queryValue);
+        if (datas.isEmpty()) return null;
+
+        return this.queryCustomerData(datas.get(0).get(0).getValueStr());
+    }
+
     // Private Info
     public Customer queryCustomerPriData(String id)
     {
@@ -92,7 +115,7 @@ public class CustomerDb extends AbstractDb
         String queryValue = "Id";
         List<List<DbData>> datas = this.queryCustomerRawDatas(queryData, queryValue);
 
-        return this.getCustomerPriData(datas.get(0), 0);
+        return this.getCustomerData(datas.get(0));
     }
 
     // Other
@@ -102,19 +125,26 @@ public class CustomerDb extends AbstractDb
         List<String> rowNames = this.getCustomerRowNames();
         List<DbType> rowTypes = this.getCustomerRowTypes();
         
+        System.out.println("===query Customer===");
         return this.queryDatas(url, sql, queryData, rowNames, rowTypes);
     }
 
     //===========================================Update===========================================
     public String updateCustomerData(Customer customer)
     {
-        String sql = "UPDATE Customers SET * WHERE Id = ?";
+        String sql = """
+            UPDATE Customers SET 
+            Name = ?, UserName = ?, Password = ?, IsLogin = ?, Balance = ?, ShopId = ?
+            WHERE Id = ?
+        """;
 
         List<DbData> data = this.getDataFromCustomer(customer);
         DbData id = data.get(0);
         data.remove(0);
+        data.add(id);
 
-        return this.updateData(url, sql, id, data);
+        System.out.println("===update Customer===");
+        return this.updateData(url, sql, data);
     }
 
     //===========================================Delete===========================================
@@ -142,6 +172,7 @@ public class CustomerDb extends AbstractDb
         rowNames.add("Name");
         rowNames.add("UserName");
         rowNames.add("Password");
+        rowNames.add("IsLogin");
         rowNames.add("Balance");
         rowNames.add("ShopId");
         return rowNames;
@@ -154,21 +185,23 @@ public class CustomerDb extends AbstractDb
         rowTypes.add(DbType.TEXT);    // Name
         rowTypes.add(DbType.TEXT);    // UserName
         rowTypes.add(DbType.TEXT);    // Password
+        rowTypes.add(DbType.INTEGER); // IsLogin
         rowTypes.add(DbType.FLOAT);   // Balance
         rowTypes.add(DbType.TEXT);    // ShopId
         return rowTypes;
     }
 
-    public Customer getCustomerPriData(List<DbData> data, int begin)
+    public Customer getCustomerData(List<DbData> data)
     {
-        String id = data.get(begin).getValueStr();
-        String name = data.get(begin + 1).getValueStr();
-        String userName = data.get(begin + 2).getValueStr();
-        String password = data.get(begin + 3).getValueStr();
-        float balance = data.get(begin + 4).getValueFloat();
-        // String shopId = data.get(begin + 5).getValueStr();
+        String id = data.get(0).getValueStr();
+        String name = data.get(1).getValueStr();
+        String userName = data.get(2).getValueStr();
+        String password = data.get(3).getValueStr();
+        boolean isLogin = data.get(4).getValueInt() == 1;
+        float balance = data.get(5).getValueFloat();
+        // String shopId = data.get(6).getValueStr();
         
-        return new Customer(id, name, userName, password, balance);
+        return new Customer(id, name, userName, password, isLogin, balance);
     }
 
     // ===Update - Insert===
@@ -178,14 +211,20 @@ public class CustomerDb extends AbstractDb
         DbData name = new DbData(customer.getName());
         DbData userName = new DbData(customer.getUserName());
         DbData password = new DbData(customer.getPassword());
+        DbData isLogin = new DbData(customer.getIsLogin() ? 1 : 0);
         DbData balance = new DbData(customer.getBalance());
-        DbData shopId = new DbData(customer.getShop().getId());
+        DbData shopId = new DbData("NULL");
+        if (customer.getShop() != null)
+        {
+            shopId = new DbData(customer.getShop().getId());
+        }
 
         List<DbData> data = new ArrayList<>();
         data.add(id);
         data.add(name);
         data.add(userName);
         data.add(password);        
+        data.add(isLogin);
         data.add(balance);
         data.add(shopId);
 

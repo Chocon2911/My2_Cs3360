@@ -1,11 +1,10 @@
 package DataBase.Base;
 
-import Util.ObjUtil;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class AbstractDb extends ObjUtil
+public abstract class AbstractDb
 {
     protected static String url = "src/DataBase/ShopDataBase.db";
     
@@ -14,6 +13,7 @@ public abstract class AbstractDb extends ObjUtil
     {
         try
         {
+            System.out.print("SetPreStmt() " + index  + ": ");
             if (data.getDataBaseType() == DbType.TEXT)
             {
                 System.out.println(data.getValueStr());
@@ -48,29 +48,30 @@ public abstract class AbstractDb extends ObjUtil
         return true;
     }
     
-    private boolean setDataBaseData(ResultSet resultSet, DbType type, DbData data, String name)
+    private boolean setDbData(ResultSet resultSet, DbType type, DbData data, String name)
     {
         try
         {
+            System.out.print("SetDbData(): ");
             if (type == DbType.TEXT)
             {
-                System.out.println(data.getValueStr());
                 data.setValueStr(resultSet.getString(name));
+                System.out.println(data.getValueStr());
             }
             else if (type == DbType.INTEGER)
             {
-                System.out.println(data.getValueInt());
                 data.setValueInt(resultSet.getInt(name));
+                System.out.println(data.getValueInt());
             }
             else if (type == DbType.FLOAT)
             {
-                System.out.println(data.getValueFloat());
                 data.setValueFloat(resultSet.getFloat(name));
+                System.out.println(data.getValueFloat());
             }
             else if (type == DbType.BLOB)
             {
-                System.out.println(data.getValueBlob());
                 data.setValueBlob(resultSet.getBlob(name));
+                System.out.println(data.getValueBlob());
             }
             else
             {
@@ -170,7 +171,7 @@ public abstract class AbstractDb extends ObjUtil
                 for (int i = 0; i < rowNames.size(); i++)
                 {
                     DbData newData = new DbData();
-                    if (!this.setDataBaseData(resultSet, rowTypes.get(i), newData, rowNames.get(i))) 
+                    if (!this.setDbData(resultSet, rowTypes.get(i), newData, rowNames.get(i))) 
                     {
                         return null;
                     }
@@ -184,26 +185,22 @@ public abstract class AbstractDb extends ObjUtil
         }
         catch (Exception e) 
         {
-            System.out.println("QueryDatas() ERROR: " + e.getMessage());
+            System.out.println("queryDatas() ERROR: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
     //===========================================Update===========================================
-    protected String updateData(String url, String execute, DbData whereData, List<DbData> datas)
+    protected String updateData(String url, String execute, List<DbData> datas)
     {
         Connection conn = getConnection(url);
         if (conn == null) throw new RuntimeException("Connection is null");
 
         try (PreparedStatement preStatement = conn.prepareStatement(execute))
         {
-            if (!this.setPreParedStatement(preStatement, whereData, 1))
-            {
-                throw new RuntimeException("setPreParedStatement error");
-            }
             for (int i = 0; i < datas.size(); i++)
             {
-                if (!this.setPreParedStatement(preStatement, datas.get(i), i + 2)) 
+                if (!this.setPreParedStatement(preStatement, datas.get(i), i + 1)) 
                 {
                     throw new RuntimeException("setPreParedStatement error");
                 }
@@ -214,7 +211,7 @@ public abstract class AbstractDb extends ObjUtil
         }
         catch (Exception e)
         {
-            System.out.println(e.getMessage());
+            System.out.println("updateData() ERROR: " + e.getMessage());
             return e.getMessage();
         }
     }

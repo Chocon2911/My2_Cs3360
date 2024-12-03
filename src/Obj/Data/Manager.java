@@ -14,15 +14,15 @@ public class Manager extends AbstractAccount
 		this.shop = null;
 	}
 
-	public Manager(String id, String name, String userName, String password)
+	public Manager(String id, String name, String userName, String password, boolean isLogin)
 	{
-		super(id, name, userName, password);
+		super(id, name, userName, password, isLogin);
 	}
 
-	public Manager(String id, String name, String userName, String password, 
+	public Manager(String id, String name, String userName, String password, boolean isLogin, 
 	Shop shop)
 	{
-        super(id, name, userName, password);
+        super(id, name, userName, password, isLogin);
 		this.shop = shop;
 	}
 
