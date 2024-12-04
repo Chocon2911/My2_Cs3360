@@ -4,13 +4,19 @@ import Controller.Base.AbstractObjCtrl;
 import DataBase.Child.*;
 import Obj.Data.*;
 import Util.GuiUtil;
+import Util.ObjUtil;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.*;
 
 public class CustomerCtrl extends AbstractObjCtrl
 {
+    //==========================================Variable==========================================
+    private Item chosenItem;
+
     //========================================Constructor=========================================
     public CustomerCtrl() { super(); }
     public CustomerCtrl(String id) { super(id); } 
@@ -272,12 +278,124 @@ public class CustomerCtrl extends AbstractObjCtrl
     //============================================================================================
     //==========================================Add2Cart==========================================
     //============================================================================================
+    public HashMap<JButton, JLabel> getItemButton_Labels()
+    {
+        GuiUtil guiUtil = GuiUtil.getInstance();
+        Customer customer = this.queryInfo();
+        if (customer.getShop() == null)
+        {
+            System.out.println("displayAdd2Cart(): Error: Customer doesn't join Shop yet");
+            System.exit(0);
+        }
+
+        Shop shop = ShopDb.getInstance().queryShopData(customer.getShop().getId());
+        HashMap<JButton, JLabel> itembutton_Labels = new HashMap<>();
+        for (Item item : shop.getItems())
+        {
+            JPanel itemPanel = guiUtil.getMainPanel();
+
+            // Name Button
+            JButton nameButton = guiUtil.createButton(item.getName(), guiUtil.smallButtonWidth, guiUtil.bigButtonHeight);
+            guiUtil.setAlignmentCenter(nameButton);
+            nameButton.addActionListener((ActionEvent e) ->
+            {
+                this.chosenItem = item;
+            });
+
+            // Price Label
+            JLabel priceLabel = new JLabel("Price: " + item.getPrice());
+            guiUtil.setAlignmentCenter(priceLabel);
+            guiUtil.setFixedSize(priceLabel, guiUtil.normalLabelWidth, guiUtil.normalLabelHeight);
+
+            itembutton_Labels.put(nameButton, priceLabel);
+        }
+
+        return itembutton_Labels;
+    }
+
+
+
+    //============================================================================================
+    //=========================================Item Info==========================================
+    //============================================================================================
+    public JPanel displayItemInfo()
+    {
+        ObjUtil objUtil = ObjUtil.getInstance();
+        GuiUtil guiUtil = GuiUtil.getInstance();
+        Item item = ItemDb.getInstance().queryItemData(this.chosenItem.getId());
+
+        // ===Panel===
+        JPanel panel = guiUtil.getMainPanel();
+
+        // Name Label
+        JLabel nameLabel = guiUtil.getNormalLabel("Name: " + item.getName());
+
+        // ItemType Label
+        JLabel itemTypeLabel = guiUtil.getNormalLabel("Type: " + objUtil.getStrFromItemType(item.getItemType()));
+
+        // Price Label
+        JLabel priceLabel = guiUtil.getNormalLabel("Price: $" + item.getPrice());
+
+        // LeftAmount Label
+        JLabel leftAmountLabel = guiUtil.getNormalLabel("Left Amount: " + item.getInitAmount());
+
+        // Display
+        panel.add(nameLabel);
+        panel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
+        panel.add(itemTypeLabel);
+        panel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
+        panel.add(priceLabel);
+        panel.add(Box.createVerticalStrut(guiUtil.verticalStrut));
+        panel.add(leftAmountLabel);
+
+        return panel;
+    }
+
+    public int add2Cart(int buyAmount)
+    {
+        Item item = ItemDb.getInstance().queryItemData(this.chosenItem.getId());
+        if (item == null) // ChosenItem not found
+        {
+            System.out.println("addItem(): Error: ChosenItem not found");
+            return 1;
+        }
+        else if (item.getInitAmount() <= 0)  // Item is out of stock
+        {
+            System.out.println("addItem(): Error: Item is out of stock");
+            return 2;
+        }
+        else if (item.getLeftAmount() < buyAmount) // Buy Amount is smaller than amount Left
+        {
+            System.out.println("addItem(): buyAmount is smaller than Amount Left");
+            return 3;
+        }
+
+        String id = ObjUtil.getInstance().getRandomStr(10);
+        Customer customer = this.queryInfo();
+        if (customer == null) // Customer not found
+        {
+            System.out.println("addItem(): Error: Customer not found");
+            return 4;
+        } 
+
+        Shop shop = customer.getShop();
+        if (shop == null) // Customer doesn't join Shop yet
+        {
+            System.out.println("addItem(): Error: Customer doesn't join Shop yet");
+            return 5;
+        }
+
+        RequestedItem ri = new RequestedItem(id, shop, null, customer, item, buyAmount);
+        RequestedItemDb.getInstance().insertRequestedItemData(ri);
+        return 0; // Add Sucessfully
+    }
 
 
 
     //============================================================================================
     //============================================Cart============================================
     //============================================================================================
+    
 
 
 

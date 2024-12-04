@@ -50,6 +50,17 @@ public class Item extends AbstractMainObj
 	public int getInitAmount() { return this.initAmount; }
 	public List<RequestedItem> getRequestedItems() { return this.requestedItems; }
 
+	public int getLeftAmount()
+	{
+		int leftAmount = this.initAmount;
+		for (RequestedItem ri : this.requestedItems)
+		{
+			leftAmount -= ri.getAmount();
+		}
+
+		return leftAmount;
+	}
+
 	//============================================Set=============================================
 	public void setShop(Shop shop) { this.shop = shop; }
 	public void setPrice(float price) { this.price = price; }

@@ -698,7 +698,7 @@ public class ManagerUI
         guiUtil.setFixedSize(itemTypeLabel, guiUtil.smallLabelWidth, guiUtil.smallLabelHeight);
 
         // JList
-        String[] itemTypesStr = {"Food", "Cloth", "Tool"};
+        String[] itemTypesStr = {"Food", "Drink", "Souvenir"};
         JList<String> itemTypeStrJList = new JList<>(itemTypesStr);
         itemTypeStrJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // Set the selection mode to single selection
         itemTypeStrJList.setSelectedIndex(0);
