@@ -47,6 +47,19 @@ public class CustomerRequest extends AbstractMainObj
 	public List<RequestedItem> getRequestedItems() { return this.requestedItems; }
 	public boolean getIsSold() { return this.isSold; }
 
+	public float getTotalMoney()
+	{
+		if (requestedItems == null) return 0.0f;
+
+		float totalMoney = 0.0f;
+		for (RequestedItem requestedItem : requestedItems)
+		{
+			totalMoney += requestedItem.getAmount() * requestedItem.getTotalMoney();
+		}
+
+		return totalMoney;
+	}
+
 	//============================================Set=============================================
 	public void setShop(Shop shop) { this.shop = shop; }
 	public void setRequestedCustomer(Customer requestedCustomer) { this.requestedCustomer = requestedCustomer; }

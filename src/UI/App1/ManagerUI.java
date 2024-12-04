@@ -44,7 +44,7 @@ public class ManagerUI
         JFrame frame = new JFrame("Manager.PreMain");
         frame.setSize(guiUtil.frameWidth, guiUtil.frameHeight);
         frame.setResizable(true);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Change to logOut() later
+        this.setDefaultWindowClose(frame);
 
         // Panel
         JPanel panel = new JPanel();
@@ -106,7 +106,7 @@ public class ManagerUI
         JFrame frame = new JFrame("Manager.Main");
         frame.setSize(guiUtil.frameWidth, guiUtil.frameHeight);
         frame.setResizable(true);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultWindowClose(frame);
 
         // Panel
         JPanel panel = new JPanel();
@@ -227,7 +227,7 @@ public class ManagerUI
             frame.dispose();
             int backButtonPressed = ctrl.backButtonPressed();
             if (backButtonPressed == 1) displayPreMain();
-            else if (backButtonPressed == 2) displayMain();
+            else if (backButtonPressed == 0) displayMain();
         });
 
         // Display
@@ -823,7 +823,12 @@ public class ManagerUI
     //==========================================Quit UI===========================================
     private void displayQuit()
     {
-        ctrl.logout();
+        if (!ctrl.logout())
+        {
+            System.out.println("Log out failed");
+        }
+
+        System.out.println("Log out successfully");
     }
 
     //===========================================Other============================================
@@ -838,6 +843,8 @@ public class ManagerUI
                 {
                     System.out.println("Log out failed");
                 }
+
+                System.out.println("Log out successfully");
                 System.exit(0);
             }
         });

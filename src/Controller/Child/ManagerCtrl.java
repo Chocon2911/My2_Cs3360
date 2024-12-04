@@ -54,9 +54,6 @@ public class ManagerCtrl extends AbstractObjCtrl
         // MainPanel
         JPanel mainPanel = GuiUtil.getInstance().getMainPanel();
 
-        // Id Label
-        JLabel idLabel = GuiUtil.getInstance().getNormalLabel(manager.getId());
-
         // Name Label
         JLabel nameLabel = GuiUtil.getInstance().getNormalLabel(manager.getName());
 
@@ -74,8 +71,6 @@ public class ManagerCtrl extends AbstractObjCtrl
         }
 
         // Display
-        mainPanel.add(idLabel);
-        mainPanel.add(Box.createVerticalStrut(GuiUtil.getInstance().verticalStrut));
         mainPanel.add(nameLabel);
         mainPanel.add(Box.createVerticalStrut(GuiUtil.getInstance().verticalStrut));
         mainPanel.add(userNameLabel);

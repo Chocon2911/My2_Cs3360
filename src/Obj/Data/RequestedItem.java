@@ -64,6 +64,12 @@ public class RequestedItem extends AbstractObj
 		return this.amount;
 	}
 
+	public float getTotalMoney()
+	{
+		if (item == null) return 0.0f;
+		return item.getPrice() * amount;
+	}
+
 	//============================================Set=============================================
 	public void setShop(Shop shop)
 	{
